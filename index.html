@@ -286,26 +286,44 @@ function renderHome(){
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
 function opts4(correct,pool){const set=new Set([correct]);let g=0;while(set.size<4&&g++<99){const c=pool();if(c!==correct)set.add(c);}return shuffle([...set]);}
 function gcd(a,b){return b?gcd(b,a%b):a;}
-/* 直前と同じ問題を出さない: gen()を sig が前回と変わるまで引き直す */
-const _last={};
-function diff(key,gen,sig){let v,s,t=0;do{v=gen();s=sig(v);t++;}while(t<60 && _last[key]===s);_last[key]=s;return v;}
+/* くじ引き(バッグ)方式: プールをシャッフルして1つずつ取り出す。
+   全部出るまで同じ問題は出ない。空になったら混ぜ直し、つなぎ目の重複も避ける。 */
+function _sig(v){return JSON.stringify(v);}
+const _bag={};
+function bagPick(key,pool){
+  let b=_bag[key];
+  if(!b||!b.items.length){
+    const items=shuffle(pool.slice());
+    if(b&&b.last!==undefined&&items.length>1&&_sig(items[items.length-1])===_sig(b.last)){
+      const t=items[0];items[0]=items[items.length-1];items[items.length-1]=t;}
+    b=_bag[key]={items,last:b?b.last:undefined};
+  }
+  const v=b.items.pop(); b.last=v; return v;
+}
+/* 問題プール */
+const KUKU_POOL=(()=>{const p=[];for(let a=2;a<=9;a++)for(let b=2;b<=9;b++)p.push({a,b});return p;})();
+const BAISU_NS=[3,4,6,7];
+const YAKUSU_NS=[12,16,18,20,24];
+const LCM_PAIRS=[[2,3],[4,6],[3,4],[4,5],[6,8],[6,9]];
+const GCD_PAIRS=[[12,18],[8,12],[9,15],[16,24],[10,15],[6,9]];
+const BAISU_DIAG=(()=>{const p=[];for(const n of BAISU_NS)for(let k=2;k<=8;k++)p.push({n,k});return p;})();
+const YAKUSU_SETS=[[12,[1,2,3,4,6,12]],[18,[1,2,3,6,9,18]],[24,[1,2,3,4,6,8,12,24]],[16,[1,2,4,8,16]],[20,[1,2,4,5,10,20]]];
 
 /* ============ DIAGNOSTIC ============ */
 const STAGES=[
-  {key:'kuku', name:'九九', icon:'✖️', color:'var(--purple)', slow:3500,
-   make(){const a=2+Math.random()*7|0,b=2+Math.random()*7|0,ans=a*b;
+  {key:'kuku', name:'九九', icon:'✖️', color:'var(--purple)', slow:3500, pool:KUKU_POOL,
+   make(x){const a=x.a,b=x.b,ans=a*b;
      return{q:`${a} × ${b}`,hint:'答えは？',ans,opts:opts4(ans,()=>(2+Math.random()*8|0)*(2+Math.random()*8|0))};}},
-  {key:'baisu', name:'倍数', icon:'🐸', color:'var(--green)', slow:6000,
-   make(){const n=[3,4,6,7][Math.random()*4|0],k=2+Math.random()*6|0,ans=n*k;
+  {key:'baisu', name:'倍数', icon:'🐸', color:'var(--green)', slow:6000, pool:BAISU_DIAG,
+   make(x){const n=x.n,k=x.k,ans=n*k;
      return{q:`${n} の 倍数は どれ？`,hint:`${n}を 何こか あつめた 数`,ans,
-       opts:opts4(ans,()=>{let x;do{x=2+Math.random()*40|0;}while(x%n===0);return x;})};}},
-  {key:'yakusu', name:'約数', icon:'🍪', color:'var(--yellow)', slow:7000,
-   make(){const sets=[[12,[1,2,3,4,6,12]],[18,[1,2,3,6,9,18]],[24,[1,2,3,4,6,8,12,24]],[16,[1,2,4,8,16]]];
-     const [n,divs]=sets[Math.random()*sets.length|0]; const ans=divs[1+Math.random()*(divs.length-2)|0];
+       opts:opts4(ans,()=>{let v;do{v=2+Math.random()*40|0;}while(v%n===0);return v;})};}},
+  {key:'yakusu', name:'約数', icon:'🍪', color:'var(--yellow)', slow:7000, pool:YAKUSU_SETS,
+   make(x){const n=x[0],divs=x[1]; const ans=divs[1+Math.random()*(divs.length-2)|0];
      return{q:`クッキー ${n}こを あまりなく 配れる 人数は？`,hint:`${n}を わりきれる 数`,ans,
-       opts:opts4(ans,()=>{let x;do{x=2+Math.random()*(n-1)|0;}while(n%x===0);return x;})};}},
-  {key:'deai', name:'最小公倍数', icon:'🤝', color:'var(--pink)', slow:9000,
-   make(){const pairs=[[4,6,12],[3,4,12],[6,8,24],[4,5,20],[2,3,6],[6,9,18]]; const [a,b,ans]=pairs[Math.random()*pairs.length|0];
+       opts:opts4(ans,()=>{let v;do{v=2+Math.random()*(n-1)|0;}while(n%v===0);return v;})};}},
+  {key:'deai', name:'最小公倍数', icon:'🤝', color:'var(--pink)', slow:9000, pool:LCM_PAIRS,
+   make(x){const a=x[0],b=x[1],ans=a*b/gcd(a,b);
      return{q:`${a} と ${b} が はじめて であう 数は？`,hint:`どちらの 倍数にも なる 一番 小さい 数`,ans,
        opts:opts4(ans,()=>{const m=[a,b][Math.random()<.5?0:1];return m*(1+Math.random()*5|0);})};}},
 ];
@@ -319,7 +337,7 @@ function startDiag(){
 }
 function nextDiag(){
   if(idx>=plan.length)return finishDiag();
-  const stage=STAGES[plan[idx]]; const item=diff('diag',()=>stage.make(),it=>it.q); item._stage=stage;
+  const stage=STAGES[plan[idx]]; const item=stage.make(bagPick('d-'+stage.key,stage.pool)); item._stage=stage;
   document.getElementById('fill').style.width=(idx/plan.length*100)+'%';
   const pill=document.getElementById('pill'); pill.textContent=stage.name; pill.style.background=stage.color;
   document.getElementById('q').textContent=item.q;
@@ -403,8 +421,8 @@ function playKuku(){
     if(i>=total){gameWin('kuku',stars,'九九ダッシュ クリア！',`さいこう ${best}れんぞく 正解！`);return;}
     document.getElementById('gFill').style.width=(i/total*100)+'%';
     document.getElementById('gStreak').textContent = streak>=2? `🔥 ${streak}れんぞく！`:'';
-    const Q=diff('kuku',()=>{const a=2+Math.random()*7|0,b=2+Math.random()*7|0;return{a,b,ans:a*b};},x=>x.a+'x'+x.b);
-    const a=Q.a,b=Q.b,ans=Q.ans;
+    const Q=bagPick('kuku',KUKU_POOL);
+    const a=Q.a,b=Q.b,ans=a*b;
     document.getElementById('gQ').textContent=`${a} × ${b}`;
     const box=document.getElementById('kOpts'); box.innerHTML='';
     opts4(ans,()=>(2+Math.random()*8|0)*(2+Math.random()*8|0)).forEach(v=>{
@@ -426,7 +444,7 @@ function playKuku(){
 function playBaisu(){
   go('s-game');
   document.getElementById('gTitle').textContent='🐸 カエルとび';
-  const n=diff('baisu',()=>[3,4,6,7][Math.random()*4|0],x=>''+x); const max=n*8>36?36:n*8; // tiles 1..max
+  const n=bagPick('baisu',BAISU_NS); const max=n*8>36?36:n*8; // tiles 1..max
   const targets=[]; for(let k=n;k<=max;k+=n)targets.push(k);
   document.getElementById('gQ').textContent=`${n} の 倍数を ぜんぶ タップ！`;
   document.getElementById('gHint').textContent=`${n}とびで カエルが すすむよ（のこり ${targets.length}）`;
@@ -456,7 +474,7 @@ function playBaisu(){
 function playYakusu(){
   go('s-game');
   document.getElementById('gTitle').textContent='🍪 クッキーわけ';
-  const choices=[12,16,18,20,24]; const n=diff('yakusu',()=>choices[Math.random()*choices.length|0],x=>''+x);
+  const n=bagPick('yakusu',YAKUSU_NS);
   const divs=[]; for(let k=1;k<=n;k++)if(n%k===0)divs.push(k);
   document.getElementById('gQ').textContent=`クッキー ${n}こ`;
   document.getElementById('gHint').textContent=`あまりなく 配れる 人数を ぜんぶ えらぼう！（のこり ${divs.length}）`;
@@ -511,14 +529,14 @@ function playDeai(){
   run();
 }
 function makeLCM(){
-  const [a,b]=diff('lcm',()=>{const p=[[2,3],[4,6],[3,4],[4,5],[6,8],[6,9]];return p[Math.random()*p.length|0];},x=>x.join(','));
+  const [a,b]=bagPick('lcm',LCM_PAIRS);
   const ans=a*b/gcd(a,b);
   return{a,b,ans,max:Math.min(ans+ (ans<14?6:2),24),dots:true,
     q:`🐸<span style="color:var(--green)">${a}とび</span> と 🐸<span style="color:var(--blue)">${b}とび</span><br>はじめて 出会う 数は？`,
     hint:'みどりと あおの 点が そろう 一番小さい 数 ＝ 最小公倍数'};
 }
 function makeGCD(){
-  const [a,b]=diff('gcd',()=>{const p=[[12,18],[8,12],[9,15],[16,24],[10,15],[6,9]];return p[Math.random()*p.length|0];},x=>x.join(','));
+  const [a,b]=bagPick('gcd',GCD_PAIRS);
   const ans=gcd(a,b);
   return{a,b,ans,max:Math.min(a,b),dots:false,
     q:`クッキー ${a}こと ${b}こ<br>おなじ数ずつ 分けられる 一番大きい 人数は？`,
