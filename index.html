@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="然BOY算数">
+<meta name="theme-color" content="#ff8a3a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>然BOY おもしろ算数</title>
+<style>
+  :root{
+    --bg1:#fff7e6; --bg2:#ffe0c2;
+    --ink:#3a2b1a; --sub:#8a6d4f;
+    --pink:#ff7aa2; --blue:#4cc3ff; --green:#4cd07a; --yellow:#ffd33d; --purple:#a87bff; --orange:#ff8a3a;
+    --card:#ffffff; --shadow:0 12px 28px rgba(120,70,20,.18);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%;}
+  body{
+    font-family:-apple-system,"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN",sans-serif;
+    color:var(--ink);
+    background:radial-gradient(120% 120% at 50% 0%, var(--bg1), var(--bg2));
+    overflow:hidden; user-select:none; -webkit-user-select:none; touch-action:manipulation;
+  }
+  #app{height:100%; display:flex; align-items:center; justify-content:center; padding:calc(env(safe-area-inset-top) + 8px) 14px 14px;}
+  .screen{width:100%; max-width:700px; max-height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    display:none; flex-direction:column; align-items:center; text-align:center;}
+  .screen.on{display:flex; animation:pop .32s ease;}
+  @keyframes pop{from{opacity:0; transform:scale(.97) translateY(8px);} to{opacity:1; transform:none;}}
+
+  /* Zenboy */
+  .zen{filter:drop-shadow(0 8px 12px rgba(120,70,20,.2));}
+  .zen.bob{animation:bob 2.2s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-10px) rotate(2deg);}}
+
+  h1{font-size:28px; margin:12px 0 2px; letter-spacing:1px;}
+  .tag{color:var(--sub); font-size:15px; margin:0 0 18px;}
+  .speech{position:relative; background:var(--card); border-radius:22px; padding:14px 18px;
+    box-shadow:var(--shadow); font-size:18px; line-height:1.6; max-width:520px; margin:6px 0 18px;}
+  .speech:after{content:""; position:absolute; top:-12px; left:50%; transform:translateX(-50%);
+    border:12px solid transparent; border-bottom-color:var(--card); border-top:0;}
+
+  .btn{border:0; border-radius:999px; padding:16px 30px; font-size:20px; font-weight:800; color:#fff;
+    background:linear-gradient(180deg,#ff9a5a,#ff7a3a); box-shadow:var(--shadow); cursor:pointer;
+    transition:transform .08s; font-family:inherit; margin:5px;}
+  .btn:active{transform:scale(.94);}
+  .btn.ghost{background:#fff; color:var(--sub); box-shadow:0 4px 12px rgba(120,70,20,.12); font-size:15px; padding:11px 20px;}
+  .btn.sm{font-size:16px; padding:11px 20px;}
+
+  /* HUD */
+  .hud{width:100%; max-width:560px; display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
+  .hud .pillstat{background:#fff; border-radius:999px; padding:7px 14px; font-weight:800; box-shadow:0 4px 12px rgba(120,70,20,.12); font-size:15px;}
+  .hud .lv{color:var(--purple);}
+  .hud .st{color:#e8920a;}
+
+  /* zone map */
+  .zones{display:grid; grid-template-columns:1fr 1fr; gap:14px; width:100%; max-width:560px; margin:8px 0 10px;}
+  .zone{position:relative; border:0; border-radius:22px; padding:18px 12px 16px; background:var(--card);
+    box-shadow:var(--shadow); cursor:pointer; transition:transform .08s; font-family:inherit; color:var(--ink); text-align:center;}
+  .zone:active{transform:scale(.96);}
+  .zone .zic{font-size:42px; line-height:1;}
+  .zone .znm{font-weight:800; font-size:18px; margin-top:6px;}
+  .zone .zsub{font-size:12px; color:var(--sub);}
+  .zone .zstars{font-size:12px; color:#e8920a; font-weight:800; margin-top:4px;}
+  .zone.diag{grid-column:1 / -1; background:linear-gradient(180deg,#fff,#fff4e6);}
+  .zone.rec:after{content:"おすすめ"; position:absolute; right:-6px; top:-12px; background:var(--pink); color:#fff;
+    font-size:12px; font-weight:800; padding:4px 12px; border-radius:999px; transform:rotate(6deg); box-shadow:var(--shadow);}
+
+  /* progress bar */
+  .top{width:100%; max-width:560px; display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+  .bar{flex:1; height:14px; background:#fff; border-radius:999px; overflow:hidden; box-shadow:inset 0 2px 4px rgba(120,70,20,.12);}
+  .fill{height:100%; width:0; background:linear-gradient(90deg,var(--yellow),var(--pink)); transition:width .4s;}
+  .stagepill{font-size:14px; font-weight:800; color:#fff; padding:6px 12px; border-radius:999px; background:var(--purple);}
+
+  .q{font-size:clamp(30px,8vw,50px); font-weight:800; margin:8px 0 4px; min-height:56px; display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;}
+  .qhint{color:var(--sub); font-size:16px; margin:0 0 16px; min-height:20px;}
+
+  .opts{display:grid; grid-template-columns:1fr 1fr; gap:13px; width:100%; max-width:520px;}
+  .opt{border:0; border-radius:20px; padding:22px 10px; font-size:30px; font-weight:800; color:var(--ink);
+    background:var(--card); box-shadow:var(--shadow); cursor:pointer; transition:transform .08s; font-family:inherit;}
+  .opt:active{transform:scale(.95);}
+  .opt.good{background:var(--green); color:#fff; animation:sg .4s;}
+  .opt.bad{background:#ff6b6b; color:#fff; animation:sb .4s;}
+  @keyframes sg{0%,100%{transform:none;}50%{transform:scale(1.08);}}
+  @keyframes sb{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}
+
+  /* number tile grid for games */
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(58px,1fr)); gap:10px; width:100%; max-width:560px; margin:6px auto 10px;}
+  .tile{aspect-ratio:1/1; border:0; border-radius:16px; background:var(--card); box-shadow:var(--shadow);
+    font-size:24px; font-weight:800; color:var(--ink); cursor:pointer; transition:transform .08s; font-family:inherit;
+    display:flex; align-items:center; justify-content:center;}
+  .tile:active{transform:scale(.92);}
+  .tile.hit{background:var(--green); color:#fff; animation:sg .35s;}
+  .tile.miss{background:#ff6b6b; color:#fff; animation:sb .35s;}
+  .tile.dim{opacity:.35;}
+
+  .float{position:fixed; font-size:32px; pointer-events:none; animation:fu 1s ease forwards; z-index:50;}
+  @keyframes fu{from{opacity:1; transform:translateY(0) scale(1);}to{opacity:0; transform:translateY(-90px) scale(1.6);}}
+
+  .lives{font-size:20px; letter-spacing:2px;}
+  .streak{font-weight:800; color:var(--orange); font-size:16px; min-height:20px;}
+
+  /* result map */
+  .map{display:flex; flex-direction:column; gap:11px; width:100%; max-width:520px; margin:8px 0 16px;}
+  .node{display:flex; align-items:center; gap:14px; background:var(--card); border-radius:18px; padding:12px 14px; box-shadow:var(--shadow); text-align:left;}
+  .node .ic{font-size:28px; width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:var(--bg1); border-radius:12px; flex:none;}
+  .node .nm{font-weight:800; font-size:17px;}
+  .node .sc{font-size:13px; color:var(--sub);}
+  .node.start{outline:4px solid var(--pink); position:relative;}
+  .node.start:after{content:"スタート"; position:absolute; right:-6px; top:-13px; background:var(--pink); color:#fff; font-size:12px; font-weight:800; padding:4px 12px; border-radius:999px; transform:rotate(6deg);}
+  .meter{flex:1; height:10px; background:#f0e6da; border-radius:999px; overflow:hidden;}
+  .meter > i{display:block; height:100%; border-radius:999px;}
+  .small{font-size:12px; color:var(--sub); margin-top:14px; line-height:1.5; max-width:520px;}
+
+  /* number line for deai */
+  .line{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; width:100%; max-width:580px; margin:6px auto 10px;}
+  .lt{position:relative; width:50px; height:64px; border-radius:14px; background:var(--card); box-shadow:var(--shadow);
+    display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; font-weight:800; font-size:18px; cursor:pointer; transition:transform .08s;}
+  .lt:active{transform:scale(.92);}
+  .lt .dotrow{position:absolute; top:5px; left:0; right:0; display:flex; gap:3px; justify-content:center;}
+  .lt .d{width:9px; height:9px; border-radius:50%;}
+  .lt.hit{background:var(--yellow); animation:sg .35s;}
+  .lt.miss{background:#ff6b6b; color:#fff; animation:sb .35s;}
+
+  .big{font-size:22px; font-weight:800; margin:6px 0;}
+  .confetti{position:fixed; top:-20px; font-size:22px; pointer-events:none; z-index:60; animation:fall linear forwards;}
+  @keyframes fall{to{transform:translateY(110vh) rotate(360deg);}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <section class="screen on" id="s-home">
+    <div class="hud">
+      <span class="pillstat lv">Lv.<span id="hLv">1</span></span>
+      <span class="pillstat st">⭐ <span id="hStar">0</span></span>
+    </div>
+    <svg class="zen bob" style="width:120px;height:120px" viewBox="0 0 120 130" id="zenHome"></svg>
+    <h1>然BOY おもしろ算数</h1>
+    <p class="tag" id="homeTag">あそぶ ゾーンを えらんでね</p>
+    <div class="zones" id="zones"></div>
+  </section>
+
+  <!-- DIAGNOSTIC QUIZ -->
+  <section class="screen" id="s-quiz">
+    <div class="top">
+      <span class="stagepill" id="pill">九九</span>
+      <div class="bar"><div class="fill" id="fill"></div></div>
+    </div>
+    <svg class="zen" style="width:80px;height:80px" viewBox="0 0 120 130" id="zenSmall"></svg>
+    <div class="q" id="q">7 × 8</div>
+    <p class="qhint" id="hint"></p>
+    <div class="opts" id="opts"></div>
+  </section>
+
+  <!-- DIAGNOSTIC RESULT -->
+  <section class="screen" id="s-result">
+    <svg class="zen bob" style="width:100px;height:100px" viewBox="0 0 120 130" id="zenResult"></svg>
+    <h1 style="font-size:23px">しんだん 結果！</h1>
+    <div class="speech" id="verdict" style="margin-bottom:14px"></div>
+    <div class="map" id="map"></div>
+    <div>
+      <button class="btn" id="goRec">おすすめの 練習へ →</button>
+      <button class="btn ghost" onclick="go('s-home')">ホームへ</button>
+    </div>
+    <p class="small" id="parent"></p>
+  </section>
+
+  <!-- GENERIC GAME -->
+  <section class="screen" id="s-game">
+    <div class="hud">
+      <button class="btn ghost sm" onclick="quitGame()">← もどる</button>
+      <span class="pillstat st">⭐ <span id="gStar">0</span></span>
+      <span class="lives" id="gLives"></span>
+    </div>
+    <div class="stagepill" id="gTitle" style="margin:4px 0">九九ダッシュ</div>
+    <div class="top" style="margin-top:6px"><div class="bar"><div class="fill" id="gFill"></div></div></div>
+    <p class="streak" id="gStreak"></p>
+    <div class="q" id="gQ" style="min-height:auto"></div>
+    <p class="qhint" id="gHint"></p>
+    <div id="gBody" style="width:100%; display:flex; flex-direction:column; align-items:center"></div>
+  </section>
+
+  <!-- WIN -->
+  <section class="screen" id="s-win">
+    <svg class="zen bob" style="width:120px;height:120px" viewBox="0 0 120 130" id="zenWin"></svg>
+    <h1 id="winHead">クリア！</h1>
+    <div class="speech" id="winMsg"></div>
+    <div class="big" id="winStars"></div>
+    <div id="winLevelUp" class="big" style="color:var(--purple)"></div>
+    <div>
+      <button class="btn" id="winAgain">もう一度</button>
+      <button class="btn ghost" onclick="go('s-home')">ホームへ</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ============ Zenboy ============ */
+function zenboy(level){
+  level=level||1;
+  const crown = level>=5 ? '<path d="M40 6 L48 16 L60 4 L72 16 L80 6 L78 20 L42 20 Z" fill="#ffcf3a" stroke="#e8920a" stroke-width="2"/><circle cx="60" cy="3" r="3" fill="#ff5a8a"/>' :
+                level>=3 ? '<path d="M44 10 L60 2 L76 10 L72 20 L48 20 Z" fill="#ffcf3a" stroke="#e8920a" stroke-width="2"/>' : '';
+  return `
+  <ellipse cx="60" cy="118" rx="30" ry="6" fill="rgba(120,70,20,.12)"/>
+  <circle cx="60" cy="68" r="42" fill="#ffd33d" stroke="#f0a500" stroke-width="3"/>
+  <circle cx="60" cy="68" r="30" fill="#fff3c4"/>
+  <circle cx="47" cy="64" r="6.5" fill="#3a2b1a"/>
+  <circle cx="73" cy="64" r="6.5" fill="#3a2b1a"/>
+  <circle cx="49" cy="62" r="2" fill="#fff"/>
+  <circle cx="75" cy="62" r="2" fill="#fff"/>
+  <circle cx="40" cy="76" r="5" fill="#ff9aa2" opacity=".8"/>
+  <circle cx="80" cy="76" r="5" fill="#ff9aa2" opacity=".8"/>
+  <path d="M50 78 Q60 88 70 78" stroke="#3a2b1a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <circle cx="60" cy="30" r="6" fill="#ff7a3a"/>
+  ${crown}`;
+}
+function paintZen(){['zenHome','zenSmall','zenResult','zenWin'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=zenboy(save.level);});}
+
+/* ============ sound ============ */
+let AC; function tone(f,t,type='sine',v=.2){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+  const o=AC.createOscillator(),g=AC.createGain(); o.type=type; o.frequency.value=f;
+  o.connect(g); g.connect(AC.destination); g.gain.value=v;
+  g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+t); o.start(); o.stop(AC.currentTime+t);}catch(e){}}
+const sGood=()=>{tone(660,.1,'triangle');setTimeout(()=>tone(990,.14,'triangle'),80);};
+const sBad =()=>tone(170,.22,'sawtooth',.14);
+const sStar=()=>tone(1320,.12,'triangle',.18);
+const sWin =()=>[523,659,784,1046,1318].forEach((f,i)=>setTimeout(()=>tone(f,.2,'triangle'),i*110));
+
+/* ============ save / state ============ */
+const DEFAULT={stars:0, level:1, diag:null, plays:{kuku:0,baisu:0,yakusu:0,deai:0}};
+let save=load();
+function load(){try{return Object.assign({},DEFAULT,JSON.parse(localStorage.getItem('zenboy_save')||'{}'));}catch(e){return Object.assign({},DEFAULT);}}
+function persist(){try{localStorage.setItem('zenboy_save',JSON.stringify(save));}catch(e){}}
+function levelFor(stars){return Math.floor(stars/15)+1;}
+function addStars(n){save.stars+=n; const nl=levelFor(save.stars); let up=false; if(nl>save.level){save.level=nl; up=true;} persist(); return up;}
+
+/* ============ router ============ */
+function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on'); document.getElementById(id).scrollTop=0;
+  if(id==='s-home')renderHome();}
+function burst(el,emoji){const r=el.getBoundingClientRect();const f=document.createElement('div');
+  f.className='float';f.textContent=emoji;f.style.left=(r.left+r.width/2-16)+'px';f.style.top=r.top+'px';
+  document.body.appendChild(f);setTimeout(()=>f.remove(),1000);}
+function confetti(){const emo=['⭐','🎉','✨','🟡','💫'];for(let i=0;i<26;i++){const c=document.createElement('div');
+  c.className='confetti';c.textContent=emo[i%emo.length];c.style.left=Math.random()*100+'vw';
+  c.style.animationDuration=(1.4+Math.random()*1.4)+'s';c.style.fontSize=(16+Math.random()*16)+'px';
+  document.body.appendChild(c);setTimeout(()=>c.remove(),3000);}}
+
+/* ============ HOME ============ */
+const ZONEDEFS=[
+  {key:'kuku',  name:'九九ダッシュ', sub:'かけ算の スピード', icon:'✖️'},
+  {key:'baisu', name:'カエルとび',   sub:'倍数を 見つける',  icon:'🐸'},
+  {key:'yakusu',name:'クッキーわけ', sub:'約数を 見つける',  icon:'🍪'},
+  {key:'deai',  name:'ふたりのカエル', sub:'公倍数・公約数', icon:'🤝'},
+];
+function renderHome(){
+  paintZen();
+  document.getElementById('hLv').textContent=save.level;
+  document.getElementById('hStar').textContent=save.stars;
+  const rec=save.diag?save.diag.start:null;
+  document.getElementById('homeTag').textContent = rec
+    ? '旗の ゾーンが きみへの おすすめ！' : 'まずは「しんだん」から はじめよう！';
+  const wrap=document.getElementById('zones'); wrap.innerHTML='';
+  // diagnostic card
+  const d=document.createElement('button'); d.className='zone diag'; d.onclick=startDiag;
+  d.innerHTML=`<div class="zic">🧭</div><div class="znm">つまずき しんだん</div>
+    <div class="zsub">${save.diag?'もう一度 しらべる':'5分・10問 で 弱点さがし'}</div>`;
+  wrap.appendChild(d);
+  // zones
+  ZONEDEFS.forEach(z=>{const b=document.createElement('button'); b.className='zone'+(rec===z.key?' rec':'');
+    b.onclick=()=>startZone(z.key);
+    b.innerHTML=`<div class="zic">${z.icon}</div><div class="znm">${z.name}</div>
+      <div class="zsub">${z.sub}</div><div class="zstars">クリア ${save.plays[z.key]||0}回</div>`;
+    wrap.appendChild(b);});
+}
+
+/* ============ helpers ============ */
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+function opts4(correct,pool){const set=new Set([correct]);let g=0;while(set.size<4&&g++<99){const c=pool();if(c!==correct)set.add(c);}return shuffle([...set]);}
+function gcd(a,b){return b?gcd(b,a%b):a;}
+
+/* ============ DIAGNOSTIC ============ */
+const STAGES=[
+  {key:'kuku', name:'九九', icon:'✖️', color:'var(--purple)', slow:3500,
+   make(){const a=2+Math.random()*7|0,b=2+Math.random()*7|0,ans=a*b;
+     return{q:`${a} × ${b}`,hint:'答えは？',ans,opts:opts4(ans,()=>(2+Math.random()*8|0)*(2+Math.random()*8|0))};}},
+  {key:'baisu', name:'倍数', icon:'🐸', color:'var(--green)', slow:6000,
+   make(){const n=[3,4,6,7][Math.random()*4|0],k=2+Math.random()*6|0,ans=n*k;
+     return{q:`${n} の 倍数は どれ？`,hint:`${n}を 何こか あつめた 数`,ans,
+       opts:opts4(ans,()=>{let x;do{x=2+Math.random()*40|0;}while(x%n===0);return x;})};}},
+  {key:'yakusu', name:'約数', icon:'🍪', color:'var(--yellow)', slow:7000,
+   make(){const sets=[[12,[1,2,3,4,6,12]],[18,[1,2,3,6,9,18]],[24,[1,2,3,4,6,8,12,24]],[16,[1,2,4,8,16]]];
+     const [n,divs]=sets[Math.random()*sets.length|0]; const ans=divs[1+Math.random()*(divs.length-2)|0];
+     return{q:`クッキー ${n}こを あまりなく 配れる 人数は？`,hint:`${n}を わりきれる 数`,ans,
+       opts:opts4(ans,()=>{let x;do{x=2+Math.random()*(n-1)|0;}while(n%x===0);return x;})};}},
+  {key:'deai', name:'最小公倍数', icon:'🤝', color:'var(--pink)', slow:9000,
+   make(){const pairs=[[4,6,12],[3,4,12],[6,8,24],[4,5,20],[2,3,6],[6,9,18]]; const [a,b,ans]=pairs[Math.random()*pairs.length|0];
+     return{q:`${a} と ${b} が はじめて であう 数は？`,hint:`どちらの 倍数にも なる 一番 小さい 数`,ans,
+       opts:opts4(ans,()=>{const m=[a,b][Math.random()<.5?0:1];return m*(1+Math.random()*5|0);})};}},
+];
+const QN_PER_STAGE=[3,2,2,3];
+let plan=[], idx=0, t0=0, dres={};
+function startDiag(){
+  plan=[]; STAGES.forEach((s,i)=>{for(let k=0;k<QN_PER_STAGE[i];k++)plan.push(i);});
+  idx=0; dres={}; STAGES.forEach(s=>dres[s.key]={c:0,n:0,slow:0});
+  document.getElementById('zenSmall').innerHTML=zenboy(save.level);
+  go('s-quiz'); nextDiag();
+}
+function nextDiag(){
+  if(idx>=plan.length)return finishDiag();
+  const stage=STAGES[plan[idx]]; const item=stage.make(); item._stage=stage;
+  document.getElementById('fill').style.width=(idx/plan.length*100)+'%';
+  const pill=document.getElementById('pill'); pill.textContent=stage.name; pill.style.background=stage.color;
+  document.getElementById('q').textContent=item.q;
+  document.getElementById('hint').textContent=item.hint;
+  const box=document.getElementById('opts'); box.innerHTML='';
+  item.opts.forEach(v=>{const b=document.createElement('button');b.className='opt';b.textContent=v;
+    b.onclick=()=>answerDiag(b,v,item);box.appendChild(b);});
+  t0=performance.now();
+}
+function answerDiag(btn,val,item){
+  const dt=performance.now()-t0, stage=item._stage, r=dres[stage.key]; r.n++;
+  document.querySelectorAll('#opts .opt').forEach(b=>b.onclick=null);
+  if(val===item.ans){r.c++; if(dt>stage.slow)r.slow++; btn.classList.add('good'); sGood(); burst(btn, dt>stage.slow?'🐢':'⭐');}
+  else{btn.classList.add('bad'); sBad(); document.querySelectorAll('#opts .opt').forEach(b=>{if(+b.textContent===item.ans)b.classList.add('good');});}
+  idx++; setTimeout(nextDiag, val===item.ans?600:1100);
+}
+function finishDiag(){
+  document.getElementById('fill').style.width='100%';
+  let weakest=null, weakScore=2;
+  const rows=STAGES.map(s=>{const r=dres[s.key]; const acc=r.n?r.c/r.n:1; const speed=r.c?1-(r.slow/r.c):1;
+    const score=acc*0.7+speed*0.3; if(score<weakScore){weakScore=score; weakest=s;} return {s,r,acc,speed,score};});
+  const map=document.getElementById('map'); map.innerHTML='';
+  rows.forEach(({s,r,score})=>{const pct=Math.round(score*100);
+    const col=score>=.8?'var(--green)':score>=.5?'var(--yellow)':'#ff6b6b';
+    const slowNote=r.slow>0?` ・ちょっと ゆっくり🐢×${r.slow}`:'';
+    const node=document.createElement('div'); node.className='node'+(s===weakest?' start':'');
+    node.innerHTML=`<div class="ic">${s.icon}</div><div style="flex:1">
+      <div class="nm">${s.name}</div><div class="sc">正解 ${r.c}/${r.n}${slowNote}</div>
+      <div class="meter"><i style="width:${pct}%;background:${col}"></i></div></div>`;
+    map.appendChild(node);});
+  const advice={
+    kuku:'まずは <b>九九</b> を「考えずに パッと言える」ように するのが 近道！',
+    baisu:'<b>倍数</b>の イメージから。カエルの ジャンプで「3とび・4とび」を 体で おぼえよう。',
+    yakusu:'<b>約数</b>が カギ。クッキーを「あまりなく 配る」あそびで かんかくを つけよう。',
+    deai:'土台は バッチリ！あとは <b>公倍数・公約数</b> の「出会い」を 練習すれば 完成。',
+  };
+  const total=rows.reduce((a,b)=>a+b.score,0)/rows.length;
+  const head= total>=.85?'すごい！かなり 力が ついてるね。' : total>=.6?'いい感じ！あと 少し！' : 'だいじょうぶ、ここから いっしょに レベルアップ！';
+  document.getElementById('verdict').innerHTML=`${head}<br>きみの <b>スタート地点</b> は…<br>「${weakest.icon} ${weakest.name==='最小公倍数'?'ふたりのカエル':weakest.name}」だ！<br><span style="font-size:15px">${advice[weakest.key]}</span>`;
+  const detail=rows.map(r=>`${r.s.name} ${Math.round(r.score*100)}%(正${r.r.c}/${r.r.n}${r.r.slow?` 遅${r.r.slow}`:''})`).join(' ／ ');
+  document.getElementById('parent').textContent='【保護者メモ】'+detail+' ／ 推奨スタート: '+weakest.name;
+  save.diag={start:weakest.key, date:Date.now()}; const up=addStars(3); persist();
+  document.getElementById('zenResult').innerHTML=zenboy(save.level);
+  document.getElementById('goRec').onclick=()=>startZone(weakest.key);
+  sWin(); go('s-result');
+}
+
+/* ============ GAME FRAMEWORK ============ */
+let G=null; // current game controller
+function quitGame(){G=null; go('s-home');}
+function setHUD(stars,lives,maxlives){
+  document.getElementById('gStar').textContent=stars;
+  document.getElementById('gLives').textContent = maxlives? '❤️'.repeat(lives)+'🤍'.repeat(maxlives-lives) : '';
+}
+function gameWin(zoneKey, starsEarned, headline, msg){
+  save.plays[zoneKey]=(save.plays[zoneKey]||0)+1;
+  const up=addStars(starsEarned);
+  document.getElementById('zenWin').innerHTML=zenboy(save.level);
+  document.getElementById('winHead').textContent=headline||'クリア！';
+  document.getElementById('winMsg').innerHTML=msg||'';
+  document.getElementById('winStars').innerHTML=`⭐ ${starsEarned}こ ゲット！　ぜんぶで ⭐${save.stars}`;
+  document.getElementById('winLevelUp').textContent = up? `🎉 レベルアップ！ Lv.${save.level} になった！` : '';
+  document.getElementById('winAgain').onclick=()=>startZone(zoneKey);
+  sWin(); confetti(); go('s-win');
+}
+function startZone(key){
+  if(key==='kuku')playKuku();
+  else if(key==='baisu')playBaisu();
+  else if(key==='yakusu')playYakusu();
+  else if(key==='deai')playDeai();
+}
+
+/* ---- 九九ダッシュ ---- */
+function playKuku(){
+  go('s-game');
+  document.getElementById('gTitle').textContent='✖️ 九九ダッシュ';
+  document.getElementById('gBody').innerHTML='<div class="opts" id="kOpts"></div>';
+  const total=10; let i=0,stars=0,streak=0,best=0;
+  setHUD(0,0,0); document.getElementById('gHint').textContent='はやく 答えると ボーナス⭐！';
+  function nextQ(){
+    if(i>=total){gameWin('kuku',stars,'九九ダッシュ クリア！',`さいこう ${best}れんぞく 正解！`);return;}
+    document.getElementById('gFill').style.width=(i/total*100)+'%';
+    document.getElementById('gStreak').textContent = streak>=2? `🔥 ${streak}れんぞく！`:'';
+    const a=2+Math.random()*7|0,b=2+Math.random()*7|0,ans=a*b;
+    document.getElementById('gQ').textContent=`${a} × ${b}`;
+    const box=document.getElementById('kOpts'); box.innerHTML='';
+    opts4(ans,()=>(2+Math.random()*8|0)*(2+Math.random()*8|0)).forEach(v=>{
+      const btn=document.createElement('button'); btn.className='opt'; btn.textContent=v;
+      btn.onclick=()=>{document.querySelectorAll('#kOpts .opt').forEach(x=>x.onclick=null);
+        const dt=performance.now()-t0;
+        if(v===ans){let s=1; if(dt<2500){s=2; burst(btn,'⚡');} else burst(btn,'⭐');
+          stars+=s; streak++; best=Math.max(best,streak); btn.classList.add('good'); sGood(); sStar();}
+        else{streak=0; btn.classList.add('bad'); sBad();
+          document.querySelectorAll('#kOpts .opt').forEach(x=>{if(+x.textContent===ans)x.classList.add('good');});}
+        setHUD(stars,0,0); i++; setTimeout(nextQ, v===ans?500:1000);};
+      box.appendChild(btn);});
+    t0=performance.now();
+  }
+  nextQ();
+}
+
+/* ---- カエルとび（倍数）---- */
+function playBaisu(){
+  go('s-game');
+  document.getElementById('gTitle').textContent='🐸 カエルとび';
+  const n=[3,4,6,7][Math.random()*4|0]; const max=n*8>36?36:n*8; // tiles 1..max
+  const targets=[]; for(let k=n;k<=max;k+=n)targets.push(k);
+  document.getElementById('gQ').textContent=`${n} の 倍数を ぜんぶ タップ！`;
+  document.getElementById('gHint').textContent=`${n}とびで カエルが すすむよ（のこり ${targets.length}）`;
+  document.getElementById('gStreak').textContent='';
+  let found=0, lives=3, stars=0;
+  setHUD(0,lives,3);
+  const body=document.getElementById('gBody'); body.innerHTML='<div class="grid" id="bGrid"></div>';
+  const grid=document.getElementById('bGrid');
+  for(let v=1;v<=max;v++){const t=document.createElement('button'); t.className='tile'; t.textContent=v;
+    t.onclick=()=>{
+      if(t.classList.contains('hit')||t.classList.contains('dim'))return;
+      if(v%n===0){t.classList.add('hit'); t.textContent='🐸'; sGood(); sStar(); burst(t,'⭐');
+        found++; stars++; setHUD(stars,lives,3);
+        document.getElementById('gFill').style.width=(found/targets.length*100)+'%';
+        document.getElementById('gHint').textContent=`${n}とびで カエルが すすむよ（のこり ${targets.length-found}）`;
+        if(found===targets.length){const bonus=lives; setTimeout(()=>gameWin('baisu',stars+bonus,'カエルとび クリア！',
+          `${n}の 倍数を ぜんぶ 見つけた！${bonus?`ノーミス ボーナス ⭐${bonus}！`:''}`),450);}
+      }else{t.classList.add('miss'); sBad(); lives--; setHUD(stars,Math.max(lives,0),3);
+        setTimeout(()=>{t.classList.remove('miss');},400);
+        if(lives<=0){setTimeout(()=>gameWin('baisu',stars,'おつかれさま！',`${n}の 倍数を ${found}こ 見つけたよ。また ちょうせん しよう！`),500);}
+      }
+    };
+    grid.appendChild(t);}
+}
+
+/* ---- クッキーわけ（約数）---- */
+function playYakusu(){
+  go('s-game');
+  document.getElementById('gTitle').textContent='🍪 クッキーわけ';
+  const choices=[12,16,18,20,24]; const n=choices[Math.random()*choices.length|0];
+  const divs=[]; for(let k=1;k<=n;k++)if(n%k===0)divs.push(k);
+  document.getElementById('gQ').textContent=`クッキー ${n}こ`;
+  document.getElementById('gHint').textContent=`あまりなく 配れる 人数を ぜんぶ えらぼう！（のこり ${divs.length}）`;
+  document.getElementById('gStreak').textContent='🍪'.repeat(Math.min(n,12))+(n>12?` ×${n}`:'');
+  let found=0, lives=3, stars=0;
+  setHUD(0,lives,3);
+  const body=document.getElementById('gBody'); body.innerHTML='<div class="grid" id="yGrid"></div>';
+  const grid=document.getElementById('yGrid');
+  for(let v=1;v<=n;v++){const t=document.createElement('button'); t.className='tile'; t.textContent=v+'人';
+    t.style.fontSize='18px';
+    t.onclick=()=>{
+      if(t.classList.contains('hit')||t.classList.contains('miss'))return;
+      if(n%v===0){t.classList.add('hit'); t.textContent=v+'人✓'; sGood(); sStar(); burst(t,'🍪');
+        found++; stars++; setHUD(stars,lives,3);
+        document.getElementById('gFill').style.width=(found/divs.length*100)+'%';
+        document.getElementById('gHint').textContent=`1人 ${n/v}こ ずつ！（のこり ${divs.length-found}）`;
+        if(found===divs.length){const bonus=lives; setTimeout(()=>gameWin('yakusu',stars+bonus,'クッキーわけ クリア！',
+          `${n}の 約数を ぜんぶ 見つけた！${bonus?`ノーミス ボーナス ⭐${bonus}！`:''}`),500);}
+      }else{t.classList.add('miss'); t.textContent=v+'人✗'; sBad(); lives--; setHUD(stars,Math.max(lives,0),3);
+        if(lives<=0){setTimeout(()=>gameWin('yakusu',stars,'おつかれさま！',`${n}の 約数を ${found}こ 見つけたよ。また ちょうせん しよう！`),500);}
+      }
+    };
+    grid.appendChild(t);}
+}
+
+/* ---- ふたりのカエル（公倍数・公約数）---- */
+function playDeai(){
+  go('s-game');
+  document.getElementById('gTitle').textContent='🤝 ふたりのカエル';
+  const rounds=[makeLCM(), makeGCD()]; let ri=0, stars=0;
+  setHUD(0,0,0);
+  function run(){
+    if(ri>=rounds.length){gameWin('deai',stars,'ふたりのカエル クリア！','公倍数も 公約数も バッチリ！');return;}
+    document.getElementById('gFill').style.width=(ri/rounds.length*100)+'%';
+    const R=rounds[ri]; document.getElementById('gStreak').textContent=`もんだい ${ri+1} / ${rounds.length}`;
+    document.getElementById('gQ').innerHTML=R.q;
+    document.getElementById('gHint').textContent=R.hint;
+    const body=document.getElementById('gBody'); body.innerHTML='<div class="line" id="dLine"></div>';
+    const line=document.getElementById('dLine');
+    for(let v=1;v<=R.max;v++){const t=document.createElement('div'); t.className='lt';
+      let dots=''; if(R.dots){ if(v%R.a===0)dots+='<span class="d" style="background:var(--green)"></span>';
+        if(R.b&&v%R.b===0)dots+='<span class="d" style="background:var(--blue)"></span>'; }
+      t.innerHTML=`<div class="dotrow">${dots}</div>${v}`;
+      t.onclick=()=>{
+        if(t.classList.contains('hit'))return;
+        if(v===R.ans){t.classList.add('hit'); sGood(); sStar(); burst(t,'🤝');
+          stars+=2; setHUD(stars,0,0); ri++; setTimeout(run,800);}
+        else{t.classList.add('miss'); sBad(); setTimeout(()=>t.classList.remove('miss'),450);}
+      };
+      line.appendChild(t);}
+  }
+  run();
+}
+function makeLCM(){
+  const pairs=[[2,3],[4,6],[3,4],[4,5],[6,8],[6,9]]; const [a,b]=pairs[Math.random()*pairs.length|0];
+  const ans=a*b/gcd(a,b);
+  return{a,b,ans,max:Math.min(ans+ (ans<14?6:2),24),dots:true,
+    q:`🐸<span style="color:var(--green)">${a}とび</span> と 🐸<span style="color:var(--blue)">${b}とび</span><br>はじめて 出会う 数は？`,
+    hint:'みどりと あおの 点が そろう 一番小さい 数 ＝ 最小公倍数'};
+}
+function makeGCD(){
+  const pairs=[[12,18],[8,12],[9,15],[16,24],[10,15],[6,9]]; const [a,b]=pairs[Math.random()*pairs.length|0];
+  const ans=gcd(a,b);
+  return{a,b,ans,max:Math.min(a,b),dots:false,
+    q:`クッキー ${a}こと ${b}こ<br>おなじ数ずつ 分けられる 一番大きい 人数は？`,
+    hint:`${a}も ${b}も わりきれる 一番大きい 数 ＝ 最大公約数`};
+}
+
+/* ============ boot ============ */
+renderHome();
+
+/* offline: register service worker (works on https / GitHub Pages) */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>

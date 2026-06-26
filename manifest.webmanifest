@@ -1,0 +1,17 @@
+{
+  "name": "然BOY おもしろ算数",
+  "short_name": "然BOY算数",
+  "description": "然BOYと九九・倍数・約数・最小公倍数・最大公約数を楽しく学ぶ算数アプリ",
+  "lang": "ja",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fff7e6",
+  "theme_color": "#ff8a3a",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
