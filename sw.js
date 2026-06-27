@@ -1,5 +1,5 @@
 /* 然BOY おもしろ算数 — service worker (offline cache) */
-const CACHE = 'zenboy-v5';
+const CACHE = 'zenboy-v6';
 const ASSETS = [
   './',
   './index.html',

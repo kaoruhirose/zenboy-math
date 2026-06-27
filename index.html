@@ -235,7 +235,7 @@
     <div id="winLevelUp" class="big" style="color:var(--purple)"></div>
     <div>
       <button class="btn" id="winAgain">もう一度</button>
-      <button class="btn ghost" onclick="go('s-home')">ホームへ</button>
+      <button class="btn ghost" id="winHome" onclick="go('s-home')">ホームへ</button>
     </div>
   </section>
 
@@ -539,6 +539,7 @@ function gameWin(zoneKey, starsEarned, headline, msg){
   document.getElementById('winMsg').innerHTML=msg||'';
   document.getElementById('winStars').innerHTML=`⭐ ${starsEarned}こ ゲット！　ぜんぶで ⭐${save.stars}`;
   document.getElementById('winLevelUp').textContent = up? `🎉 レベルアップ！ Lv.${save.level} になった！` : '';
+  document.getElementById('winAgain').style.display='';
   document.getElementById('winAgain').textContent='もう一度';
   document.getElementById('winAgain').onclick=()=>startZone(zoneKey);
   sWin(); confetti(); go('s-win');
@@ -813,6 +814,7 @@ function masterDan(n,stars){
   let extra= up?`🎉 レベルアップ！ Lv.${save.level}！`:'';
   if(allDone && firstTime)extra='👑 ぜんぶ マスター！九九マスター証 ゲット！';
   document.getElementById('winLevelUp').textContent=extra;
+  document.getElementById('winAgain').style.display='';
   document.getElementById('winAgain').textContent='マップへ';
   document.getElementById('winAgain').onclick=()=>{renderDanMap();go('s-kukumap');};
   sWin(); confetti(); go('s-win');
@@ -876,8 +878,9 @@ function weakDone(startCount,left,stars){
   document.getElementById('winMsg').innerHTML= cleared>0?`にがてが <b>${startCount} → ${left}</b> こに へった！`:'また ちょうせんしよう！';
   document.getElementById('winStars').innerHTML=`⭐ ${stars}こ ゲット！　ぜんぶで ⭐${save.stars}`;
   document.getElementById('winLevelUp').textContent= up?`🎉 レベルアップ！ Lv.${save.level}！`:(left===0?'🏆 にがてが ゼロに なった！':'');
-  document.getElementById('winAgain').textContent= left>0?'もう一回':'ホームへ';
-  document.getElementById('winAgain').onclick= left>0?()=>startWeak():()=>go('s-home');
+  const again=document.getElementById('winAgain');
+  if(left>0){ again.style.display=''; again.textContent='もう一回'; again.onclick=()=>startWeak(); }
+  else { again.style.display='none'; } // 苦手ゼロ → ホームボタンだけ
   sWin(); confetti(); go('s-win');
 }
 function showWeakEmpty(){
@@ -885,8 +888,7 @@ function showWeakEmpty(){
   document.getElementById('winHead').textContent='にがては ないよ！';
   document.getElementById('winMsg').innerHTML='いま にがてな 九九は ありません。<br>れんしゅうで まちがえると ここに あつまるよ。';
   document.getElementById('winStars').innerHTML=''; document.getElementById('winLevelUp').textContent='';
-  document.getElementById('winAgain').textContent='ホームへ';
-  document.getElementById('winAgain').onclick=()=>go('s-home');
+  document.getElementById('winAgain').style.display='none'; // ホームボタンだけ
   sWin(); go('s-win');
 }
 
