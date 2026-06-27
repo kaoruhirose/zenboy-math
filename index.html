@@ -1026,7 +1026,7 @@ function playTimeAttack(){
   function endTA(){
     if(ended)return; ended=true; clearInterval(window.taTimer);
     const newRec = score>(save.taBest||0); if(newRec)save.taBest=score;
-    const stars=Math.max(1,Math.round(score/3))+(newRec?3:0);
+    const stars=Math.floor(score/2)+(newRec?3:0); // 2問につき⭐1（＋新記録ボーナス）
     const up=addStars(stars); persist();
     document.getElementById('zenWin').innerHTML=zenboy(save.level);
     document.getElementById('winHead').textContent= newRec?'🎉 新記録！':'タイムアップ！';
