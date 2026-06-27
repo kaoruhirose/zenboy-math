@@ -168,6 +168,7 @@
   .zcell.locked{background:#f0e8dc;}
   .zcell.locked .ze{filter:grayscale(1); opacity:.35;}
   .zcell.locked .zl{color:#b9a890;}
+  .zsec{font-weight:800; font-size:15px; color:var(--sub); margin:16px 4px 2px; text-align:left;}
 </style>
 </head>
 <body>
@@ -302,7 +303,7 @@
     </div>
     <h1 style="font-size:22px">ずかん</h1>
     <p class="tag" id="zukanTag">あつめた シール</p>
-    <div id="zukanGrid" class="zukan"></div>
+    <div id="zukanGrid" style="width:100%; max-width:560px"></div>
   </section>
 
 </div>
@@ -391,7 +392,7 @@ function recordKuku(n,k,correct,fast){
   if(correct){
     if(save.weak[key]!==undefined){
       save.weak[key]-=1;
-      if(save.weak[key]<=0)delete save.weak[key]; // 克服！
+      if(save.weak[key]<=0){delete save.weak[key]; if(weakCount()===0)award('a_noweak');} // 克服！
     }
   }else{
     save.weak[key]=WEAK_NEED; // 苦手に登録 / 再燃
@@ -406,13 +407,35 @@ function touchStreak(){
   const t=todayStr(); if(save.streak.last===t)return;
   const y=new Date(Date.now()-864e5).toLocaleDateString('sv');
   save.streak.count=(save.streak.last===y)?(save.streak.count+1):1;
-  save.streak.last=t; persist();
+  save.streak.last=t; persist(); checkAchievements();
 }
 /* 九九とっくん: やさしい順 / 段ごとのシール */
 const DAN_ORDER=[2,5,3,4,6,7,8,9];
 const DAN_STICKER={2:'🐬',5:'🐢',3:'🐱',4:'🍀',6:'🐸',7:'🌈',8:'🐙',9:'🐉'};
+/* がんばりシール（段マスター以外の達成でも集まる） */
+const ACHV=[
+  {k:'a_diag',   e:'🧭', l:'しんだん'},
+  {k:'a_play',   e:'🐟', l:'れんしゅう'},
+  {k:'a_streak3',e:'🔥', l:'3日れんぞく'},
+  {k:'a_streak7',e:'🏅', l:'7日れんぞく'},
+  {k:'a_noweak', e:'🎯', l:'にがてゼロ'},
+  {k:'a_lv5',    e:'🐳', l:'レベル5'},
+  {k:'a_lv10',   e:'💎', l:'でんせつ'},
+  {k:'a_star100',e:'🌟', l:'ほし100'},
+  {k:'a_combo',  e:'🏆', l:'九九10れんぞく'},
+];
+function award(k){ if(!save.stickers.includes(k)){ save.stickers.push(k); persist(); return true; } return false; }
+function checkAchievements(){
+  if(save.diag) award('a_diag');
+  if(Object.values(save.plays).reduce((a,b)=>a+b,0)>=1) award('a_play');
+  if(save.streak.count>=3) award('a_streak3');
+  if(save.streak.count>=7) award('a_streak7');
+  if(save.level>=5) award('a_lv5');
+  if(save.level>=10) award('a_lv10');
+  if(save.stars>=100) award('a_star100');
+}
 function levelFor(stars){return Math.floor(stars/15)+1;}
-function addStars(n){save.stars+=n; const nl=levelFor(save.stars); let up=false; if(nl>save.level){save.level=nl; up=true;} persist(); return up;}
+function addStars(n){save.stars+=n; const nl=levelFor(save.stars); let up=false; if(nl>save.level){save.level=nl; up=true;} persist(); checkAchievements(); return up;}
 
 /* ============ router ============ */
 function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
@@ -619,7 +642,7 @@ function playKuku(){
   const total=10; let i=0,stars=0,streak=0,best=0;
   setHUD(0,0,0); document.getElementById('gHint').textContent='はやく 答えると ボーナス⭐！';
   function nextQ(){
-    if(i>=total){gameWin('kuku',stars,'九九ダッシュ クリア！',`さいこう ${best}れんぞく 正解！`);return;}
+    if(i>=total){if(best>=10)award('a_combo'); gameWin('kuku',stars,'九九ダッシュ クリア！',`さいこう ${best}れんぞく 正解！`);return;}
     document.getElementById('gFill').style.width=(i/total*100)+'%';
     document.getElementById('gStreak').textContent = streak>=2? `🔥 ${streak}れんぞく！`:'';
     const Q=bagPick('kuku',KUKU_POOL);
@@ -882,15 +905,13 @@ function masterDan(n,stars){
 /* ずかん */
 function renderZukan(){
   document.getElementById('zukanTag').textContent=`あつめた シール ${save.stickers.length}まい`;
-  const g=document.getElementById('zukanGrid'); g.innerHTML='';
-  DAN_ORDER.forEach(n=>{const got=save.stickers.includes('dan'+n);
-    const c=document.createElement('div'); c.className='zcell'+(got?'':' locked');
-    c.innerHTML=`<div class="ze">${got?DAN_STICKER[n]:'❓'}</div><div class="zl">${n}の段</div>`;
-    g.appendChild(c);});
-  const gotM=save.stickers.includes('master');
-  const c=document.createElement('div'); c.className='zcell'+(gotM?'':' locked');
-  c.innerHTML=`<div class="ze">${gotM?'👑':'❓'}</div><div class="zl">マスター証</div>`;
-  g.appendChild(c);
+  const cell=(got,e,l)=>`<div class="zcell${got?'':' locked'}"><div class="ze">${got?e:'❓'}</div><div class="zl">${l}</div></div>`;
+  const dan=DAN_ORDER.map(n=>cell(save.stickers.includes('dan'+n),DAN_STICKER[n],n+'の段'))
+    .concat(cell(save.stickers.includes('master'),'👑','マスター証')).join('');
+  const ach=ACHV.map(a=>cell(save.stickers.includes(a.k),a.e,a.l)).join('');
+  document.getElementById('zukanGrid').innerHTML=
+    `<div class="zsec">🥇 九九マスター</div><div class="zukan">${dan}</div>
+     <div class="zsec">🎖️ がんばりシール</div><div class="zukan">${ach}</div>`;
 }
 
 /* ============ にがて たいじ（苦手の集中復習）============ */
@@ -939,7 +960,7 @@ function weakDone(startCount,left,stars){
   document.getElementById('winLevelUp').textContent= up?`🎉 レベルアップ！ Lv.${save.level}！`:(left===0?'🏆 にがてが ゼロに なった！':'');
   const again=document.getElementById('winAgain');
   if(left>0){ again.style.display=''; again.textContent='もう一回'; again.onclick=()=>startWeak(); }
-  else { again.style.display='none'; } // 苦手ゼロ → ホームボタンだけ
+  else { again.style.display='none'; award('a_noweak'); } // 苦手ゼロ → ホームボタンだけ
   sWin(); confetti(); go('s-win');
 }
 function showWeakEmpty(){
@@ -961,6 +982,7 @@ function resetAll(){
 }
 
 /* ============ boot ============ */
+checkAchievements(); // 既存の進捗にも達成シールを反映
 renderHome();
 
 /* offline + 自動更新: 新しい版が出たら自動で読み込み直す */
