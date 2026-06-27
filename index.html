@@ -204,7 +204,6 @@
   <section class="screen on" id="s-home">
     <div class="hud">
       <span class="pillstat lv">Lv.<span id="hLv">1</span></span>
-      <span class="pillstat" style="color:#e85d2a">🔥 <span id="hStreak">0</span></span>
       <span class="pillstat st">⭐ <span id="hStar">0</span></span>
     </div>
     <svg class="zen bob" style="width:120px;height:120px" viewBox="0 0 120 130" id="zenHome"></svg>
@@ -271,7 +270,6 @@
   <section class="screen" id="s-kukumap">
     <div class="hud">
       <button class="btn ghost sm" onclick="go('s-home')">← ホーム</button>
-      <span class="pillstat" style="color:#e85d2a">🔥 <span id="kmStreak">0</span></span>
       <span class="pillstat st">⭐ <span id="kmStar">0</span></span>
     </div>
     <h1 style="font-size:22px">九九とっくん</h1>
@@ -417,8 +415,6 @@ const DAN_STICKER={2:'🐬',5:'🐢',3:'🐱',4:'🍀',6:'🐸',7:'🌈',8:'🐙
 const ACHV=[
   {k:'a_diag',   e:'🧭', l:'しんだん'},
   {k:'a_play',   e:'🐟', l:'れんしゅう'},
-  {k:'a_streak3',e:'🔥', l:'3日れんぞく'},
-  {k:'a_streak7',e:'🏅', l:'7日れんぞく'},
   {k:'a_noweak', e:'🎯', l:'にがてゼロ'},
   {k:'a_lv5',    e:'🐳', l:'レベル5'},
   {k:'a_lv10',   e:'💎', l:'でんせつ'},
@@ -429,8 +425,6 @@ function award(k){ if(!save.stickers.includes(k)){ save.stickers.push(k); persis
 function checkAchievements(){
   if(save.diag) award('a_diag');
   if(Object.values(save.plays).reduce((a,b)=>a+b,0)>=1) award('a_play');
-  if(save.streak.count>=3) award('a_streak3');
-  if(save.streak.count>=7) award('a_streak7');
   if(save.level>=5) award('a_lv5');
   if(save.level>=10) award('a_lv10');
   if(save.stars>=100) award('a_star100');
@@ -461,7 +455,6 @@ function renderHome(){
   paintZen();
   document.getElementById('hLv').textContent=save.level;
   document.getElementById('hStar').textContent=save.stars;
-  document.getElementById('hStreak').textContent=save.streak.count;
   const rec=save.diag?save.diag.start:null;
   document.getElementById('homeTag').textContent = '今日も いっしょに がんばろう！';
   const wrap=document.getElementById('zones'); wrap.innerHTML='';
@@ -781,7 +774,6 @@ function currentDanIndex(){let i=0;while(i<DAN_ORDER.length&&save.dan.mastered.i
 function updateStreakUI(){const a=document.getElementById('hStreak');if(a)a.textContent=save.streak.count;const b=document.getElementById('kmStreak');if(b)b.textContent=save.streak.count;}
 
 function renderDanMap(){
-  document.getElementById('kmStreak').textContent=save.streak.count;
   document.getElementById('kmStar').textContent=save.stars;
   const allDone=DAN_ORDER.every(n=>save.dan.mastered.includes(n));
   document.getElementById('kmTag').textContent= allDone?'🎉 ぜんぶの段を マスター！九九マスターだ！':'ひかっている 段から はじめよう！';
@@ -981,7 +973,7 @@ function showWeakEmpty(){
 
 /* 記録をリセット（保護者向け・確認つき） */
 function resetAll(){
-  if(!confirm('ぜんぶの きろく（⭐星・レベル・📔ずかん・🎯にがて・🔥連続）を けして、さいしょから やりなおしますか？\n\nこの そうさは もとに もどせません。'))return;
+  if(!confirm('ぜんぶの きろく（⭐星・レベル・📔ずかん・🎯にがて）を けして、さいしょから やりなおしますか？\n\nこの そうさは もとに もどせません。'))return;
   localStorage.removeItem('zenboy_save');
   save=load();
   renderHome();
