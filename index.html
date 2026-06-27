@@ -383,6 +383,7 @@ function load(){
   s.streak=Object.assign({count:0,last:null},s.streak||{});
   s.stickers=s.stickers||[];
   s.weak=s.weak||{}; // 苦手な九九 { "7x8": のこり克服回数, ... }
+  s.taBest=s.taBest||0; // 九九タイムアタックの最高記録(問数)
   return s;
 }
 /* 苦手記録: 間違えたら登録(克服まで3回)、正解で1ずつ減る、克服で消える */
@@ -480,6 +481,12 @@ function renderHome(){
   w.innerHTML=`<div class="zic">🎯</div><div class="znm">にがて たいじ</div>
     <div class="zsub">${wc>0?`にがてな 九九が <b style="color:#e8540a">${wc}こ</b> ＝ あつめて 集中れんしゅう`:'いまは にがて ゼロ！🏆'}</div>`;
   wrap.appendChild(w);
+
+  // ⏱ 九九タイムアタック
+  const ta=document.createElement('button'); ta.className='zone feat'; ta.onclick=playTimeAttack;
+  ta.innerHTML=`<div class="zic">⏱️</div><div class="znm">九九タイムアタック</div>
+    <div class="zsub">60びょうで なんもん とける？${save.taBest?` ・さいこう <b style="color:#e8540a">${save.taBest}</b>もん`:''}</div>`;
+  wrap.appendChild(ta);
 
   // 診断
   const d=document.createElement('button'); d.className='zone'+(rec?' rec':''); d.onclick=startDiag;
@@ -608,7 +615,7 @@ function finishDiag(){
 
 /* ============ GAME FRAMEWORK ============ */
 let G=null; // current game controller
-function quitGame(){G=null; go('s-home');}
+function quitGame(){G=null; clearInterval(window.taTimer); go('s-home');}
 function setHUD(stars,lives,maxlives){
   document.getElementById('gStar').textContent=stars;
   document.getElementById('gLives').textContent = maxlives? '❤️'.repeat(lives)+'🤍'.repeat(maxlives-lives) : '';
@@ -979,6 +986,56 @@ function resetAll(){
   save=load();
   renderHome();
   alert('リセットしました！さいしょから あそべます。');
+}
+
+/* ============ 九九タイムアタック（60秒で何問）============ */
+function playTimeAttack(){
+  touchStreak(); updateStreakUI();
+  go('s-game');
+  document.getElementById('gTitle').textContent='⏱️ 九九タイムアタック';
+  document.getElementById('gLives').textContent='';
+  document.getElementById('gHint').textContent='60びょうで なんもん とけるかな？';
+  const T=60000; let timeLeft=T, score=0, last=performance.now(), ended=false;
+  setHUD(0,0,0);
+  clearInterval(window.taTimer);
+  window.taTimer=setInterval(()=>{
+    const now=performance.now(); timeLeft-=(now-last); last=now;
+    if(timeLeft<=0){ timeLeft=0; document.getElementById('gFill').style.width='0%'; endTA(); return; }
+    document.getElementById('gFill').style.width=(timeLeft/T*100)+'%';
+    const sec=Math.ceil(timeLeft/1000);
+    document.getElementById('gStreak').textContent='⏱️ のこり '+sec+'びょう';
+    document.getElementById('gStreak').style.color = sec<=10?'#e8540a':'var(--orange)';
+  },100);
+  function q(){
+    if(ended)return;
+    const Q=bagPick('ta',KUKU_POOL), a=Q.a, b=Q.b, ans=a*b;
+    document.getElementById('gQ').textContent=`${a} × ${b}`;
+    document.getElementById('gBody').innerHTML='<div class="opts" id="tOpts"></div>';
+    const box=document.getElementById('tOpts');
+    opts4(ans,()=>(2+Math.random()*8|0)*(2+Math.random()*8|0)).forEach(v=>{
+      const btn=document.createElement('button'); btn.className='opt'; btn.textContent=v;
+      btn.onclick=()=>{ if(ended)return;
+        document.querySelectorAll('#tOpts .opt').forEach(x=>x.onclick=null);
+        if(v===ans){score++; setHUD(score,0,0); btn.classList.add('good'); sGood(); sStar(); recordKuku(a,b,true,true);}
+        else{btn.classList.add('bad'); sBad(); document.querySelectorAll('#tOpts .opt').forEach(x=>{if(+x.textContent===ans)x.classList.add('good');}); recordKuku(a,b,false,false);}
+        setTimeout(q, v===ans?240:560);
+      };
+      box.appendChild(btn);});
+  }
+  function endTA(){
+    if(ended)return; ended=true; clearInterval(window.taTimer);
+    const newRec = score>(save.taBest||0); if(newRec)save.taBest=score;
+    const stars=Math.max(1,Math.round(score/3))+(newRec?3:0);
+    const up=addStars(stars); persist();
+    document.getElementById('zenWin').innerHTML=zenboy(save.level);
+    document.getElementById('winHead').textContent= newRec?'🎉 新記録！':'タイムアップ！';
+    document.getElementById('winMsg').innerHTML=`60びょうで <b>${score}もん</b> 正解！`+(newRec?'<br>さいこう記録 こうしん！':`<br>さいこう記録は ${save.taBest}もん`);
+    document.getElementById('winStars').innerHTML=`⭐ ${stars}こ ゲット！　ぜんぶで ⭐${save.stars}`;
+    document.getElementById('winLevelUp').textContent= up?`🎉 レベルアップ！ Lv.${save.level}！`:'';
+    const again=document.getElementById('winAgain'); again.style.display=''; again.textContent='もう一度'; again.onclick=()=>playTimeAttack();
+    sWin(); confetti(); go('s-win');
+  }
+  q();
 }
 
 /* ============ boot ============ */
