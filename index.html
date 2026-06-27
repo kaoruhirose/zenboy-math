@@ -895,9 +895,15 @@ function showWeakEmpty(){
 /* ============ boot ============ */
 renderHome();
 
-/* offline: register service worker (works on https / GitHub Pages) */
+/* offline + 自動更新: 新しい版が出たら自動で読み込み直す */
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  let _reloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(_reloaded)return; _reloaded=true; location.reload();
+  });
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').then(reg=>{ try{reg.update();}catch(e){} }).catch(()=>{});
+  });
 }
 </script>
 </body>
