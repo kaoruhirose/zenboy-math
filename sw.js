@@ -1,5 +1,5 @@
 /* 然BOY おもしろ算数 — service worker (offline cache) */
-const CACHE = 'zenboy-v6';
+const CACHE = 'zenboy-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -20,13 +20,26 @@ self.addEventListener('activate', e => {
   );
 });
 
-/* cache-first: app works fully offline once loaded */
+/* HTMLは network-first（オンラインなら常に最新版）、その他は cache-first。
+   → 修正がiPadでもすぐ反映され、オフラインでもキャッシュで動く。 */
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  const req = e.request;
+  const isHTML = req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html');
+  if (isHTML) {
+    e.respondWith(
+      fetch(req).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put('./index.html', copy)).catch(() => {});
+        return res;
+      }).catch(() => caches.match(req).then(hit => hit || caches.match('./index.html')))
+    );
+    return;
+  }
   e.respondWith(
-    caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
+    caches.match(req).then(hit => hit || fetch(req).then(res => {
       const copy = res.clone();
-      caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
+      caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
       return res;
     }).catch(() => caches.match('./index.html')))
   );
