@@ -171,6 +171,25 @@
 </style>
 </head>
 <body>
+<!-- シャチ用の共通グラデーション（写実的な陰影） -->
+<svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs>
+  <linearGradient id="oBody" x1="0" y1="0" x2="0.15" y2="1">
+    <stop offset="0" stop-color="#3a4a5b"/><stop offset=".25" stop-color="#222e3b"/>
+    <stop offset=".7" stop-color="#141c25"/><stop offset="1" stop-color="#080c12"/>
+  </linearGradient>
+  <linearGradient id="oBelly" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c4d0da"/>
+  </linearGradient>
+  <linearGradient id="oSaddle" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#8a98a8"/><stop offset="1" stop-color="#54616e"/>
+  </linearGradient>
+  <linearGradient id="oFin" x1="0" y1="0" x2="0.3" y2="1">
+    <stop offset="0" stop-color="#2a3744"/><stop offset="1" stop-color="#070b10"/>
+  </linearGradient>
+  <radialGradient id="oGloss" cx=".5" cy=".5" r=".5">
+    <stop offset="0" stop-color="#cfe0ee" stop-opacity=".55"/><stop offset="1" stop-color="#cfe0ee" stop-opacity="0"/>
+  </radialGradient>
+</defs></svg>
 <div id="app">
 
   <!-- HOME -->
@@ -283,49 +302,48 @@
 
 <script>
 /* ============ Zenboy ============ */
-/* 子どものシャチ（横向きシルエット・本物のシャチ寄り）。レベルで成長:
-   1=こども(背びれ低い)→2→3(キラキラ)→4(背びれが伸びて王冠) */
+/* 子どものシャチ（横向き・写実寄り。陰影グラデーション＋正しい模様）。
+   レベルで成長: 1=こども(背びれ低い)→2→3(キラキラ)→4(背びれが伸びて王冠) */
 function zenboy(level){
   level=level||1;
   const stage = level>=7?4 : level>=5?3 : level>=3?2 : 1;
   const S      = [0,0.86,0.93,1.0,1.06][stage];  // 成長スケール
-  const finTop = [0,30,22,13,6][stage];          // 背びれの先端の高さ(小さいほど高い)
-  const BLACK='#222b38', BELLY='#f3f7fb', SADDLE='#5b6b80', EYEP='#f3f7fb';
-  const crown = stage>=4 ? `<path d="M40 ${finTop-3} L46 ${finTop+5} L50 ${finTop-7} L54 ${finTop+5} L60 ${finTop-3} L58 ${finTop+9} L42 ${finTop+9} Z" fill="#ffd33d" stroke="#e8920a" stroke-width="1.6"/>` : '';
-  const sparkle = stage>=3 ? '<text x="10" y="36" font-size="14">✨</text><text x="96" y="44" font-size="12">✨</text>' : '';
-  const baby = stage===1 ? '<text x="98" y="40" font-size="12">💧</text>' : '';
+  const finTop = [0,30,22,13,6][stage];          // 背びれ先端の高さ(小さいほど高い)
+  const crown = stage>=4 ? `<path d="M47 ${finTop-3} L53 ${finTop+5} L57 ${finTop-7} L61 ${finTop+5} L67 ${finTop-3} L65 ${finTop+9} L49 ${finTop+9} Z" fill="#ffd33d" stroke="#e8920a" stroke-width="1.6"/>` : '';
+  const sparkle = stage>=3 ? '<text x="8" y="34" font-size="14">✨</text><text x="98" y="42" font-size="12">✨</text>' : '';
+  const baby = stage===1 ? '<text x="100" y="38" font-size="12">💧</text>' : '';
   const body = `
-    <ellipse cx="58" cy="116" rx="40" ry="6" fill="rgba(30,45,70,.15)"/>
-    <!-- 尾びれ(2枚のひれ) -->
-    <path d="M22 64 Q9 54 2 48 Q12 60 18 65 Q12 69 2 82 Q11 73 22 70 Z" fill="${BLACK}"/>
+    <ellipse cx="60" cy="115" rx="42" ry="6" fill="rgba(20,35,55,.16)"/>
+    <!-- 尾びれ -->
+    <path d="M17 60 C10 55 5 51 1 49 C6 56 9 60 12 63 C9 67 6 73 1 82 C7 76 12 70 17 67 Z"
+      fill="url(#oFin)"/>
     <!-- 体 -->
-    <path d="M110 68
-      C104 56 96 50 86 49
-      C74 48 64 49 56 50
-      L50 ${finTop} L42 51
-      C33 52 26 56 21 62
-      C18 66 17 70 18 74
-      C24 72 31 71 38 72
-      C30 80 24 92 30 100
-      C40 96 50 86 56 80
-      C70 84 88 82 100 74
-      C106 71 108 70 110 68 Z" fill="${BLACK}"/>
+    <path d="M115 61
+      C113 51 107 46 99 45 C86 42 73 43 64 44
+      L57 ${finTop} L48 46
+      C37 48 27 52 18 59 C14 61 12 62 11 64
+      C16 70 24 74 34 76 C48 79 64 80 80 77
+      C95 74 107 69 115 61 Z" fill="url(#oBody)"/>
+    <!-- 背中のツヤ -->
+    <ellipse cx="74" cy="52" rx="30" ry="11" fill="url(#oGloss)" transform="rotate(-9 74 52)"/>
     <!-- 灰色サドルパッチ -->
-    <ellipse cx="44" cy="58" rx="13" ry="6" fill="${SADDLE}" opacity=".55" transform="rotate(-12 44 58)"/>
+    <ellipse cx="40" cy="53" rx="13" ry="5" fill="url(#oSaddle)" opacity=".92" transform="rotate(-10 40 53)"/>
     <!-- 白いお腹 -->
-    <path d="M104 70 C92 80 72 82 58 79 C48 77 40 73 34 71
-      C40 80 50 86 58 85 C74 86 92 80 104 71 Z" fill="${BELLY}"/>
+    <path d="M112 63 C100 71 84 75 67 75 C53 75 43 73 35 70
+      C41 77 52 80 65 80 C81 80 97 74 110 64 Z" fill="url(#oBelly)"/>
+    <!-- のど(白) -->
+    <path d="M114 62 C109 69 103 72 96 72 C100 67 106 63 112 60 Z" fill="url(#oBelly)"/>
     <!-- 胸びれ -->
-    <path d="M64 76 Q58 92 48 98 Q64 90 76 82 Z" fill="#1b232f"/>
+    <path d="M70 71 C61 82 53 88 47 91 C58 86 70 80 78 74 Z" fill="url(#oFin)"/>
     <!-- 白い目もよう -->
-    <ellipse cx="90" cy="60" rx="7" ry="3.6" fill="${EYEP}" transform="rotate(-18 90 60)"/>
+    <ellipse cx="87" cy="56" rx="9" ry="4.4" fill="#fdfeff" transform="rotate(-22 87 56)"/>
     <!-- 目 -->
-    <circle cx="94" cy="63" r="3" fill="#0d1118"/>
-    <circle cx="95.1" cy="62" r="1" fill="#fff"/>
+    <circle cx="96" cy="60" r="2.9" fill="#0c1016"/>
+    <circle cx="97.1" cy="59" r="0.95" fill="#eef4fa"/>
     <!-- 口 -->
-    <path d="M110 70 Q100 73 90 72" stroke="#0d1118" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <path d="M114 65 C105 69 97 70 89 69" stroke="#0c1016" stroke-width="1.6" fill="none" stroke-linecap="round"/>
   `;
-  return `<g transform="translate(58 66) scale(${S}) translate(-58 -66)">${crown}${body}${sparkle}${baby}</g>`;
+  return `<g transform="translate(60 64) scale(${S}) translate(-60 -64)">${crown}${body}${sparkle}${baby}</g>`;
 }
 function paintZen(){['zenHome','zenSmall','zenResult','zenWin'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=zenboy(save.level);});}
 
