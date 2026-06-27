@@ -322,8 +322,24 @@ function load(){
   s.dan=Object.assign({mastered:[],step:{}},s.dan||{});
   s.streak=Object.assign({count:0,last:null},s.streak||{});
   s.stickers=s.stickers||[];
+  s.weak=s.weak||{}; // 苦手な九九 { "7x8": のこり克服回数, ... }
   return s;
 }
+/* 苦手記録: 間違えたら登録(克服まで3回)、正解で1ずつ減る、克服で消える */
+const WEAK_NEED=3;
+function recordKuku(n,k,correct,fast){
+  const key=n+'x'+k;
+  if(correct){
+    if(save.weak[key]!==undefined){
+      save.weak[key]-=1;
+      if(save.weak[key]<=0)delete save.weak[key]; // 克服！
+    }
+  }else{
+    save.weak[key]=WEAK_NEED; // 苦手に登録 / 再燃
+  }
+  persist();
+}
+function weakCount(){return Object.keys(save.weak).length;}
 function persist(){try{localStorage.setItem('zenboy_save',JSON.stringify(save));}catch(e){}}
 /* 連続記録: 1日1回プレイで更新 */
 function todayStr(){return new Date().toLocaleDateString('sv');} // YYYY-MM-DD
@@ -375,6 +391,13 @@ function renderHome(){
     <div class="zsub">1だんずつ マスターしよう（${masteredN}/${DAN_ORDER.length}）</div>
     <div class="prog">${dots}</div>`;
   wrap.appendChild(f);
+
+  // ★ にがて たいじ（苦手の集中復習）
+  const wc=weakCount();
+  const w=document.createElement('button'); w.className='zone feat'+(wc>0?' rec':''); w.onclick=startWeak;
+  w.innerHTML=`<div class="zic">🎯</div><div class="znm">にがて たいじ</div>
+    <div class="zsub">${wc>0?`にがてな 九九が <b style="color:#e8540a">${wc}こ</b> ＝ あつめて 集中れんしゅう`:'いまは にがて ゼロ！🏆'}</div>`;
+  wrap.appendChild(w);
 
   // 診断
   const d=document.createElement('button'); d.className='zone'+(rec?' rec':''); d.onclick=startDiag;
@@ -467,6 +490,7 @@ function answerDiag(btn,val,item){
   document.querySelectorAll('#opts .opt').forEach(b=>b.onclick=null);
   if(val===item.ans){r.c++; if(dt>stage.slow)r.slow++; btn.classList.add('good'); sGood(); burst(btn, dt>stage.slow?'🐢':'⭐');}
   else{btn.classList.add('bad'); sBad(); document.querySelectorAll('#opts .opt').forEach(b=>{if(+b.textContent===item.ans)b.classList.add('good');});}
+  if(stage.key==='kuku'){const m=item.q.match(/(\d+)\s*×\s*(\d+)/); if(m)recordKuku(+m[1],+m[2],val===item.ans,dt<stage.slow);}
   idx++; setTimeout(nextDiag, val===item.ans?600:1100);
 }
 function finishDiag(){
@@ -550,6 +574,7 @@ function playKuku(){
           stars+=s; streak++; best=Math.max(best,streak); btn.classList.add('good'); sGood(); sStar();}
         else{streak=0; btn.classList.add('bad'); sBad();
           document.querySelectorAll('#kOpts .opt').forEach(x=>{if(+x.textContent===ans)x.classList.add('good');});}
+        recordKuku(a,b,v===ans,dt<2500);
         setHUD(stars,0,0); i++; setTimeout(nextQ, v===ans?500:1000);};
       box.appendChild(btn);});
     t0=performance.now();
@@ -750,6 +775,7 @@ function danStep3(n){
         if(v===ans){correct++; const fast=performance.now()-t<2500, s=fast?2:1; stars+=s;
           document.getElementById('danStar').textContent=stars; btn.classList.add('good');sGood();sStar();burst(btn,fast?'⚡':'⭐');}
         else{btn.classList.add('bad');sBad();document.querySelectorAll('#dOpts .opt').forEach(x=>{if(+x.textContent===ans)x.classList.add('good');});}
+        recordKuku(n,k,v===ans,performance.now()-t<2500);
         i++; setTimeout(q,550);};
       box.appendChild(btn);});
   })();
@@ -804,6 +830,64 @@ function renderZukan(){
   const c=document.createElement('div'); c.className='zcell'+(gotM?'':' locked');
   c.innerHTML=`<div class="ze">${gotM?'👑':'❓'}</div><div class="zl">マスター証</div>`;
   g.appendChild(c);
+}
+
+/* ============ にがて たいじ（苦手の集中復習）============ */
+function startWeak(){
+  touchStreak(); updateStreakUI();
+  const keys=Object.keys(save.weak);
+  if(!keys.length)return showWeakEmpty();
+  go('s-game');
+  document.getElementById('gTitle').textContent='🎯 にがて たいじ';
+  document.getElementById('gStreak').textContent='';
+  setHUD(0,0,0);
+  const startCount=keys.length; let stars=0, done=0; const maxQ=12;
+  function pick(){
+    const ks=Object.keys(save.weak).sort((a,b)=>save.weak[b]-save.weak[a]); // 苦手度が高い順
+    const top=ks.slice(0,Math.min(3,ks.length));
+    return top[Math.random()*top.length|0];
+  }
+  (function q(){
+    const left=weakCount();
+    if(left===0)return weakDone(startCount,0,stars);
+    if(done>=maxQ)return weakDone(startCount,left,stars);
+    document.getElementById('gFill').style.width=((startCount-left)/startCount*100)+'%';
+    document.getElementById('gHint').textContent=`のこり にがて ${left}こ`;
+    const key=pick(), n=+key.split('x')[0], k=+key.split('x')[1], ans=n*k;
+    document.getElementById('gQ').textContent=`${n} × ${k}`;
+    document.getElementById('gBody').innerHTML='<div class="opts" id="wOpts"></div>';
+    const box=document.getElementById('wOpts');
+    opts4(ans,()=>n*(1+Math.random()*9|0)).forEach(v=>{
+      const btn=document.createElement('button'); btn.className='opt'; btn.textContent=v;
+      btn.onclick=()=>{document.querySelectorAll('#wOpts .opt').forEach(x=>x.onclick=null);
+        if(v===ans){recordKuku(n,k,true,false); stars++; setHUD(stars,0,0); btn.classList.add('good'); sGood(); sStar();
+          burst(btn, save.weak[key]===undefined?'🎉':'⭐');}
+        else{recordKuku(n,k,false,false); btn.classList.add('bad'); sBad();
+          document.querySelectorAll('#wOpts .opt').forEach(x=>{if(+x.textContent===ans)x.classList.add('good');});}
+        done++; setTimeout(q,650);};
+      box.appendChild(btn);});
+  })();
+}
+function weakDone(startCount,left,stars){
+  const up=addStars(stars); persist();
+  document.getElementById('zenWin').innerHTML=zenboy(save.level);
+  document.getElementById('winHead').textContent= left===0?'にがて ぜんぶ たいじ！':'にがて たいじ おわり！';
+  const cleared=startCount-left;
+  document.getElementById('winMsg').innerHTML= cleared>0?`にがてが <b>${startCount} → ${left}</b> こに へった！`:'また ちょうせんしよう！';
+  document.getElementById('winStars').innerHTML=`⭐ ${stars}こ ゲット！　ぜんぶで ⭐${save.stars}`;
+  document.getElementById('winLevelUp').textContent= up?`🎉 レベルアップ！ Lv.${save.level}！`:(left===0?'🏆 にがてが ゼロに なった！':'');
+  document.getElementById('winAgain').textContent= left>0?'もう一回':'ホームへ';
+  document.getElementById('winAgain').onclick= left>0?()=>startWeak():()=>go('s-home');
+  sWin(); confetti(); go('s-win');
+}
+function showWeakEmpty(){
+  document.getElementById('zenWin').innerHTML=zenboy(save.level);
+  document.getElementById('winHead').textContent='にがては ないよ！';
+  document.getElementById('winMsg').innerHTML='いま にがてな 九九は ありません。<br>れんしゅうで まちがえると ここに あつまるよ。';
+  document.getElementById('winStars').innerHTML=''; document.getElementById('winLevelUp').textContent='';
+  document.getElementById('winAgain').textContent='ホームへ';
+  document.getElementById('winAgain').onclick=()=>go('s-home');
+  sWin(); go('s-win');
 }
 
 /* ============ boot ============ */
