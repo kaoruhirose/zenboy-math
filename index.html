@@ -130,6 +130,44 @@
   .big{font-size:22px; font-weight:800; margin:6px 0;}
   .confetti{position:fixed; top:-20px; font-size:22px; pointer-events:none; z-index:60; animation:fall linear forwards;}
   @keyframes fall{to{transform:translateY(110vh) rotate(360deg);}}
+
+  /* featured 九九 card */
+  .feat{grid-column:1 / -1; background:linear-gradient(135deg,#fff,#ffe9d2); position:relative;}
+  .feat .zic{font-size:40px;}
+  .feat .prog{display:flex; gap:5px; justify-content:center; margin-top:8px; flex-wrap:wrap;}
+  .feat .pdot{width:16px; height:16px; border-radius:50%; background:#eadbc8; font-size:11px; display:flex; align-items:center; justify-content:center;}
+  .feat .pdot.m{background:var(--green);}
+
+  /* 九九 dot scaffold */
+  .dotsviz{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:560px; margin:6px auto 14px;}
+  .dotgrp{display:flex; gap:3px; padding:7px 9px; background:#fff; border-radius:12px; box-shadow:var(--shadow);}
+  .dotgrp .pt{width:13px; height:13px; border-radius:50%; background:var(--orange);}
+  .countup{font-size:15px; color:var(--sub); margin:-6px 0 12px;}
+
+  /* dan map */
+  .danrow{display:flex; align-items:center; gap:12px; background:var(--card); border-radius:18px; padding:12px 14px; margin:9px 0; box-shadow:var(--shadow);}
+  .danrow.locked{opacity:.5;}
+  .danrow.cur{outline:4px solid var(--pink);}
+  .danrow .dnum{width:50px; height:50px; border-radius:14px; background:var(--purple); color:#fff; font-weight:800; font-size:18px; display:flex; align-items:center; justify-content:center; flex:none;}
+  .danrow.mastered .dnum{background:var(--green);}
+  .danrow.locked .dnum{background:#bbb;}
+  .danrow .dinfo{flex:1; text-align:left;}
+  .danrow .dname{font-weight:800; font-size:17px;}
+  .danrow .dsteps{display:flex; gap:5px; margin-top:5px;}
+  .danrow .s{width:30px; height:10px; border-radius:999px; background:#eadbc8;}
+  .danrow .s.on{background:var(--yellow);}
+  .danrow .sticker{font-size:30px;}
+  .danrow .play{border:0; border-radius:999px; padding:10px 16px; font-weight:800; color:#fff; background:var(--orange); font-family:inherit; font-size:15px;}
+  .danrow.locked .play{background:#bbb;}
+
+  /* zukan */
+  .zukan{display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:12px; width:100%; max-width:560px; margin:10px auto;}
+  .zcell{background:var(--card); border-radius:18px; padding:14px 6px; box-shadow:var(--shadow); text-align:center;}
+  .zcell .ze{font-size:38px; line-height:1;}
+  .zcell .zl{font-size:13px; font-weight:800; margin-top:6px;}
+  .zcell.locked{background:#f0e8dc;}
+  .zcell.locked .ze{filter:grayscale(1); opacity:.35;}
+  .zcell.locked .zl{color:#b9a890;}
 </style>
 </head>
 <body>
@@ -139,6 +177,7 @@
   <section class="screen on" id="s-home">
     <div class="hud">
       <span class="pillstat lv">Lv.<span id="hLv">1</span></span>
+      <span class="pillstat" style="color:#e85d2a">🔥 <span id="hStreak">0</span></span>
       <span class="pillstat st">⭐ <span id="hStar">0</span></span>
     </div>
     <svg class="zen bob" style="width:120px;height:120px" viewBox="0 0 120 130" id="zenHome"></svg>
@@ -200,6 +239,45 @@
     </div>
   </section>
 
+  <!-- 九九とっくん MAP -->
+  <section class="screen" id="s-kukumap">
+    <div class="hud">
+      <button class="btn ghost sm" onclick="go('s-home')">← ホーム</button>
+      <span class="pillstat" style="color:#e85d2a">🔥 <span id="kmStreak">0</span></span>
+      <span class="pillstat st">⭐ <span id="kmStar">0</span></span>
+    </div>
+    <h1 style="font-size:22px">九九とっくん</h1>
+    <p class="tag" id="kmTag">ひかっている 段から はじめよう！</p>
+    <div id="danmap" style="width:100%; max-width:540px"></div>
+    <button class="btn ghost sm" onclick="renderZukan();go('s-zukan')">📔 ずかんを みる</button>
+  </section>
+
+  <!-- 段 SESSION -->
+  <section class="screen" id="s-dan">
+    <div class="hud">
+      <button class="btn ghost sm" onclick="go('s-kukumap')">← もどる</button>
+      <span class="stagepill" id="danTitle">2の段</span>
+      <span class="pillstat st">⭐ <span id="danStar">0</span></span>
+    </div>
+    <div class="stagepill" id="danStepName" style="background:var(--green); margin:6px 0">Step1 見て覚える</div>
+    <div class="top"><div class="bar"><div class="fill" id="danFill"></div></div></div>
+    <div class="q" id="danQ" style="min-height:auto"></div>
+    <p class="qhint" id="danHint"></p>
+    <div id="danBody" style="width:100%; display:flex; flex-direction:column; align-items:center"></div>
+  </section>
+
+  <!-- ずかん -->
+  <section class="screen" id="s-zukan">
+    <div class="hud">
+      <button class="btn ghost sm" onclick="go('s-kukumap')">← もどる</button>
+      <span class="pillstat">📔 ずかん</span>
+      <span></span>
+    </div>
+    <h1 style="font-size:22px">ずかん</h1>
+    <p class="tag" id="zukanTag">あつめた シール</p>
+    <div id="zukanGrid" class="zukan"></div>
+  </section>
+
 </div>
 
 <script>
@@ -237,8 +315,27 @@ const sWin =()=>[523,659,784,1046,1318].forEach((f,i)=>setTimeout(()=>tone(f,.2,
 /* ============ save / state ============ */
 const DEFAULT={stars:0, level:1, diag:null, plays:{kuku:0,baisu:0,yakusu:0,deai:0}};
 let save=load();
-function load(){try{return Object.assign({},DEFAULT,JSON.parse(localStorage.getItem('zenboy_save')||'{}'));}catch(e){return Object.assign({},DEFAULT);}}
+function load(){
+  let s={}; try{s=JSON.parse(localStorage.getItem('zenboy_save')||'{}');}catch(e){}
+  s=Object.assign({},DEFAULT,s);
+  s.plays=Object.assign({kuku:0,baisu:0,yakusu:0,deai:0},s.plays||{});
+  s.dan=Object.assign({mastered:[],step:{}},s.dan||{});
+  s.streak=Object.assign({count:0,last:null},s.streak||{});
+  s.stickers=s.stickers||[];
+  return s;
+}
 function persist(){try{localStorage.setItem('zenboy_save',JSON.stringify(save));}catch(e){}}
+/* 連続記録: 1日1回プレイで更新 */
+function todayStr(){return new Date().toLocaleDateString('sv');} // YYYY-MM-DD
+function touchStreak(){
+  const t=todayStr(); if(save.streak.last===t)return;
+  const y=new Date(Date.now()-864e5).toLocaleDateString('sv');
+  save.streak.count=(save.streak.last===y)?(save.streak.count+1):1;
+  save.streak.last=t; persist();
+}
+/* 九九とっくん: やさしい順 / 段ごとのシール */
+const DAN_ORDER=[2,5,3,4,6,7,8,9];
+const DAN_STICKER={2:'🐬',5:'🖐️',3:'🐱',4:'🍀',6:'🐸',7:'🌈',8:'🐙',9:'🐉'};
 function levelFor(stars){return Math.floor(stars/15)+1;}
 function addStars(n){save.stars+=n; const nl=levelFor(save.stars); let up=false; if(nl>save.level){save.level=nl; up=true;} persist(); return up;}
 
@@ -265,20 +362,37 @@ function renderHome(){
   paintZen();
   document.getElementById('hLv').textContent=save.level;
   document.getElementById('hStar').textContent=save.stars;
+  document.getElementById('hStreak').textContent=save.streak.count;
   const rec=save.diag?save.diag.start:null;
-  document.getElementById('homeTag').textContent = rec
-    ? '旗の ゾーンが きみへの おすすめ！' : 'まずは「しんだん」から はじめよう！';
+  document.getElementById('homeTag').textContent = '今日も いっしょに がんばろう！';
   const wrap=document.getElementById('zones'); wrap.innerHTML='';
-  // diagnostic card
-  const d=document.createElement('button'); d.className='zone diag'; d.onclick=startDiag;
+
+  // ★ featured: 九九とっくん（段の進み具合つき）
+  const masteredN=save.dan.mastered.length;
+  const f=document.createElement('button'); f.className='zone feat'; f.onclick=()=>{renderDanMap();go('s-kukumap');};
+  let dots=''; DAN_ORDER.forEach(n=>{const m=save.dan.mastered.includes(n); dots+=`<span class="pdot${m?' m':''}">${m?'★':n}</span>`;});
+  f.innerHTML=`<div class="zic">🥇</div><div class="znm">九九とっくん</div>
+    <div class="zsub">1だんずつ マスターしよう（${masteredN}/${DAN_ORDER.length}）</div>
+    <div class="prog">${dots}</div>`;
+  wrap.appendChild(f);
+
+  // 診断
+  const d=document.createElement('button'); d.className='zone'+(rec?' rec':''); d.onclick=startDiag;
   d.innerHTML=`<div class="zic">🧭</div><div class="znm">つまずき しんだん</div>
-    <div class="zsub">${save.diag?'もう一度 しらべる':'5分・10問 で 弱点さがし'}</div>`;
+    <div class="zsub">${save.diag?'もう一度 しらべる':'弱点さがし'}</div>`;
   wrap.appendChild(d);
-  // zones
-  ZONEDEFS.forEach(z=>{const b=document.createElement('button'); b.className='zone'+(rec===z.key?' rec':'');
-    b.onclick=()=>startZone(z.key);
-    b.innerHTML=`<div class="zic">${z.icon}</div><div class="znm">${z.name}</div>
-      <div class="zsub">${z.sub}</div><div class="zstars">クリア ${save.plays[z.key]||0}回</div>`;
+
+  // ずかん
+  const z=document.createElement('button'); z.className='zone'; z.onclick=()=>{renderZukan();go('s-zukan');};
+  z.innerHTML=`<div class="zic">📔</div><div class="znm">ずかん</div>
+    <div class="zsub">シール ${save.stickers.length}まい</div>`;
+  wrap.appendChild(z);
+
+  // 練習ゾーン
+  ZONEDEFS.forEach(zo=>{const b=document.createElement('button'); b.className='zone'+(rec===zo.key?' rec':'');
+    b.onclick=()=>startZone(zo.key);
+    b.innerHTML=`<div class="zic">${zo.icon}</div><div class="znm">${zo.name}</div>
+      <div class="zsub">${zo.sub}</div><div class="zstars">クリア ${save.plays[zo.key]||0}回</div>`;
     wrap.appendChild(b);});
 }
 
@@ -330,6 +444,7 @@ const STAGES=[
 const QN_PER_STAGE=[3,2,2,3];
 let plan=[], idx=0, t0=0, dres={};
 function startDiag(){
+  touchStreak(); updateStreakUI();
   plan=[]; STAGES.forEach((s,i)=>{for(let k=0;k<QN_PER_STAGE[i];k++)plan.push(i);});
   idx=0; dres={}; STAGES.forEach(s=>dres[s.key]={c:0,n:0,slow:0});
   document.getElementById('zenSmall').innerHTML=zenboy(save.level);
@@ -400,10 +515,12 @@ function gameWin(zoneKey, starsEarned, headline, msg){
   document.getElementById('winMsg').innerHTML=msg||'';
   document.getElementById('winStars').innerHTML=`⭐ ${starsEarned}こ ゲット！　ぜんぶで ⭐${save.stars}`;
   document.getElementById('winLevelUp').textContent = up? `🎉 レベルアップ！ Lv.${save.level} になった！` : '';
+  document.getElementById('winAgain').textContent='もう一度';
   document.getElementById('winAgain').onclick=()=>startZone(zoneKey);
   sWin(); confetti(); go('s-win');
 }
 function startZone(key){
+  touchStreak(); updateStreakUI();
   if(key==='kuku')playKuku();
   else if(key==='baisu')playBaisu();
   else if(key==='yakusu')playYakusu();
@@ -541,6 +658,152 @@ function makeGCD(){
   return{a,b,ans,max:Math.min(a,b),dots:false,
     q:`クッキー ${a}こと ${b}こ<br>おなじ数ずつ 分けられる 一番大きい 人数は？`,
     hint:`${a}も ${b}も わりきれる 一番大きい 数 ＝ 最大公約数`};
+}
+
+/* ============ 九九とっくん（段別・3ステップ）============ */
+function danState(n){return save.dan.step[n]||0;} // 0未 1step1 2step2 3マスター
+function currentDanIndex(){let i=0;while(i<DAN_ORDER.length&&save.dan.mastered.includes(DAN_ORDER[i]))i++;return Math.min(i,DAN_ORDER.length-1);}
+function updateStreakUI(){const a=document.getElementById('hStreak');if(a)a.textContent=save.streak.count;const b=document.getElementById('kmStreak');if(b)b.textContent=save.streak.count;}
+
+function renderDanMap(){
+  document.getElementById('kmStreak').textContent=save.streak.count;
+  document.getElementById('kmStar').textContent=save.stars;
+  const allDone=DAN_ORDER.every(n=>save.dan.mastered.includes(n));
+  document.getElementById('kmTag').textContent= allDone?'🎉 ぜんぶの段を マスター！九九マスターだ！':'ひかっている 段から はじめよう！';
+  const cur=currentDanIndex();
+  const map=document.getElementById('danmap'); map.innerHTML='';
+  DAN_ORDER.forEach((n,i)=>{
+    const mastered=save.dan.mastered.includes(n);
+    const locked=i>cur, isCur=(i===cur&&!mastered), st=danState(n);
+    const steps=[1,2,3].map(s=>`<span class="s${st>=s?' on':''}"></span>`).join('');
+    const row=document.createElement('div');
+    row.className='danrow'+(mastered?' mastered':'')+(locked?' locked':'')+(isCur?' cur':'');
+    row.innerHTML=`<div class="dnum">${n}</div>
+      <div class="dinfo"><div class="dname">${n}の段 ${mastered?DAN_STICKER[n]:''}</div><div class="dsteps">${steps}</div></div>
+      ${locked?`<div class="sticker">🔒</div>`:`<button class="play">${mastered?'もう一度':(st>0?'つづき':'はじめる')}</button>`}`;
+    if(!locked)row.querySelector('.play').onclick=()=>startDan(n);
+    map.appendChild(row);
+  });
+}
+
+function startDan(n){
+  touchStreak(); updateStreakUI();
+  go('s-dan');
+  document.getElementById('danTitle').textContent=n+'の段';
+  document.getElementById('danStar').textContent='0';
+  const st=danState(n); const step= st>=3?3:st+1;
+  if(step===1)danStep1(n); else if(step===2)danStep2(n); else danStep3(n);
+}
+function dotGroups(n,k){let g='';for(let i=0;i<k;i++){let p='';for(let d=0;d<n;d++)p+='<span class="pt"></span>';g+=`<span class="dotgrp">${p}</span>`;}return g;}
+
+/* Step1 見て覚える */
+function danStep1(n){
+  const sn=document.getElementById('danStepName'); sn.textContent='Step1 見て覚える'; sn.style.background='var(--green)';
+  document.getElementById('danHint').textContent='こえに 出して となえよう！';
+  let k=1;
+  (function show(){
+    document.getElementById('danFill').style.width=((k-1)/9*100)+'%';
+    document.getElementById('danQ').innerHTML=`${n} × ${k} = <b style="color:var(--orange)">${n*k}</b>`;
+    document.getElementById('danBody').innerHTML=`<div class="countup">${n}が ${k}こ で… ${n*k}！</div>
+      <div class="dotsviz">${dotGroups(n,k)}</div>
+      <button class="btn" id="danNext">${k<9?'言えた！つぎ →':'できた！🎉'}</button>`;
+    document.getElementById('danNext').onclick=()=>{sStar(); if(k<9){k++;show();}else finishStep(n,1);};
+  })();
+}
+
+/* Step2 じゅんばん（最初の3問だけドットの足場） */
+function danStep2(n){
+  const sn=document.getElementById('danStepName'); sn.textContent='Step2 じゅんばん'; sn.style.background='var(--blue)';
+  document.getElementById('danHint').textContent='じゅんばんに こたえよう';
+  let k=1, stars=0;
+  (function q(){
+    document.getElementById('danFill').style.width=((k-1)/9*100)+'%';
+    const ans=n*k; document.getElementById('danQ').textContent=`${n} × ${k}`;
+    const scaffold = k<=3 ? `<div class="dotsviz">${dotGroups(n,k)}</div>` : '';
+    document.getElementById('danBody').innerHTML=scaffold+`<div class="opts" id="dOpts"></div>`;
+    const box=document.getElementById('dOpts');
+    opts4(ans,()=>n*(1+Math.random()*9|0)).forEach(v=>{
+      const btn=document.createElement('button'); btn.className='opt'; btn.textContent=v;
+      btn.onclick=()=>{document.querySelectorAll('#dOpts .opt').forEach(x=>x.onclick=null);
+        if(v===ans){btn.classList.add('good');sGood();sStar();stars++;document.getElementById('danStar').textContent=stars;burst(btn,'⭐');
+          k++; setTimeout(()=> k>9?finishStep(n,2):q(), 520);}
+        else{btn.classList.add('bad');sBad();document.querySelectorAll('#dOpts .opt').forEach(x=>{if(+x.textContent===ans)x.classList.add('good');});
+          setTimeout(q,1100);}};
+      box.appendChild(btn);});
+  })();
+}
+
+/* Step3 バラバラ・スピード（7問以上正解でマスター） */
+function danStep3(n){
+  const sn=document.getElementById('danStepName'); sn.textContent='Step3 スピード'; sn.style.background='var(--pink)';
+  document.getElementById('danHint').textContent='バラバラ！はやく こたえよう';
+  const bag=shuffle([1,2,3,4,5,6,7,8,9]); let i=0, correct=0, stars=0;
+  (function q(){
+    if(i>=9)return finishStep3(n,correct,stars);
+    document.getElementById('danFill').style.width=(i/9*100)+'%';
+    const k=bag[i], ans=n*k; document.getElementById('danQ').textContent=`${n} × ${k}`;
+    document.getElementById('danBody').innerHTML=`<div class="opts" id="dOpts"></div>`;
+    const box=document.getElementById('dOpts'); const t=performance.now();
+    opts4(ans,()=>n*(1+Math.random()*9|0)).forEach(v=>{
+      const btn=document.createElement('button'); btn.className='opt'; btn.textContent=v;
+      btn.onclick=()=>{document.querySelectorAll('#dOpts .opt').forEach(x=>x.onclick=null);
+        if(v===ans){correct++; const fast=performance.now()-t<2500, s=fast?2:1; stars+=s;
+          document.getElementById('danStar').textContent=stars; btn.classList.add('good');sGood();sStar();burst(btn,fast?'⚡':'⭐');}
+        else{btn.classList.add('bad');sBad();document.querySelectorAll('#dOpts .opt').forEach(x=>{if(+x.textContent===ans)x.classList.add('good');});}
+        i++; setTimeout(q,550);};
+      box.appendChild(btn);});
+  })();
+}
+
+function finishStep(n,s){
+  save.dan.step[n]=Math.max(save.dan.step[n]||0,s); persist();
+  sWin(); document.getElementById('danFill').style.width='100%';
+  document.getElementById('danQ').innerHTML=''; document.getElementById('danHint').textContent='';
+  document.getElementById('danBody').innerHTML=`<div class="big">🎉 Step${s} クリア！</div>
+    <button class="btn" onclick="startDan(${n})">つぎへ すすむ →</button>
+    <button class="btn ghost" onclick="renderDanMap();go('s-kukumap')">マップへ</button>`;
+}
+function finishStep3(n,correct,stars){
+  document.getElementById('danFill').style.width='100%';
+  if(correct>=7){ masterDan(n,stars); return; }
+  sBad();
+  document.getElementById('danQ').innerHTML=''; document.getElementById('danHint').textContent='';
+  document.getElementById('danBody').innerHTML=`<div class="big">${correct}/9 せいかい！おしい！</div>
+    <p class="qhint">あと すこし！もう一回 ちょうせんしよう</p>
+    <button class="btn" onclick="startDan(${n})">もう一回</button>
+    <button class="btn ghost" onclick="renderDanMap();go('s-kukumap')">マップへ</button>`;
+}
+function masterDan(n,stars){
+  const firstTime=!save.dan.mastered.includes(n);
+  if(firstTime){save.dan.mastered.push(n); if(!save.stickers.includes('dan'+n))save.stickers.push('dan'+n);}
+  save.dan.step[n]=3;
+  const allDone=DAN_ORDER.every(d=>save.dan.mastered.includes(d));
+  if(allDone && !save.stickers.includes('master'))save.stickers.push('master');
+  const earn=(firstTime?6:2)+stars; const up=addStars(earn); persist();
+  document.getElementById('zenWin').innerHTML=zenboy(save.level);
+  document.getElementById('winHead').textContent= firstTime?`${n}の段 マスター！`:`${n}の段 クリア！`;
+  document.getElementById('winMsg').innerHTML= firstTime?`ずかんに <b style="font-size:32px">${DAN_STICKER[n]}</b> が ふえた！`:'よく できました！';
+  document.getElementById('winStars').innerHTML=`⭐ ${earn}こ ゲット！　ぜんぶで ⭐${save.stars}`;
+  let extra= up?`🎉 レベルアップ！ Lv.${save.level}！`:'';
+  if(allDone && firstTime)extra='👑 ぜんぶ マスター！九九マスター証 ゲット！';
+  document.getElementById('winLevelUp').textContent=extra;
+  document.getElementById('winAgain').textContent='マップへ';
+  document.getElementById('winAgain').onclick=()=>{renderDanMap();go('s-kukumap');};
+  sWin(); confetti(); go('s-win');
+}
+
+/* ずかん */
+function renderZukan(){
+  document.getElementById('zukanTag').textContent=`あつめた シール ${save.stickers.length}まい`;
+  const g=document.getElementById('zukanGrid'); g.innerHTML='';
+  DAN_ORDER.forEach(n=>{const got=save.stickers.includes('dan'+n);
+    const c=document.createElement('div'); c.className='zcell'+(got?'':' locked');
+    c.innerHTML=`<div class="ze">${got?DAN_STICKER[n]:'❓'}</div><div class="zl">${n}の段</div>`;
+    g.appendChild(c);});
+  const gotM=save.stickers.includes('master');
+  const c=document.createElement('div'); c.className='zcell'+(gotM?'':' locked');
+  c.innerHTML=`<div class="ze">${gotM?'👑':'❓'}</div><div class="zl">マスター証</div>`;
+  g.appendChild(c);
 }
 
 /* ============ boot ============ */
