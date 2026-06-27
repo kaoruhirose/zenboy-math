@@ -184,6 +184,7 @@
     <h1>然BOY おもしろ算数</h1>
     <p class="tag" id="homeTag">あそぶ ゾーンを えらんでね</p>
     <div class="zones" id="zones"></div>
+    <button class="btn ghost sm" onclick="resetAll()" style="margin-top:18px; opacity:.6; font-size:14px">🔄 さいしょから（記録を消す）</button>
   </section>
 
   <!-- DIAGNOSTIC QUIZ -->
@@ -890,6 +891,15 @@ function showWeakEmpty(){
   document.getElementById('winStars').innerHTML=''; document.getElementById('winLevelUp').textContent='';
   document.getElementById('winAgain').style.display='none'; // ホームボタンだけ
   sWin(); go('s-win');
+}
+
+/* 記録をリセット（保護者向け・確認つき） */
+function resetAll(){
+  if(!confirm('ぜんぶの きろく（⭐星・レベル・📔ずかん・🎯にがて・🔥連続）を けして、さいしょから やりなおしますか？\n\nこの そうさは もとに もどせません。'))return;
+  localStorage.removeItem('zenboy_save');
+  save=load();
+  renderHome();
+  alert('リセットしました！さいしょから あそべます。');
 }
 
 /* ============ boot ============ */
