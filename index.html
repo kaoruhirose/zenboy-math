@@ -34,7 +34,7 @@
   @keyframes pop{from{opacity:0; transform:scale(.97) translateY(8px);} to{opacity:1; transform:none;}}
 
   /* Zenboy */
-  .zen{filter:drop-shadow(0 8px 12px rgba(120,70,20,.2));}
+  .zen{flex:none; filter:drop-shadow(0 8px 12px rgba(120,70,20,.2));}
   .zen.bob{animation:bob 2.2s ease-in-out infinite;}
   @keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-10px) rotate(2deg);}}
 
@@ -283,23 +283,35 @@
 
 <script>
 /* ============ Zenboy ============ */
+/* 子どものシャチ。レベルで成長: 1=あかちゃん→2→3(キラキラ)→4(王冠) */
 function zenboy(level){
   level=level||1;
-  const crown = level>=5 ? '<path d="M40 6 L48 16 L60 4 L72 16 L80 6 L78 20 L42 20 Z" fill="#ffcf3a" stroke="#e8920a" stroke-width="2"/><circle cx="60" cy="3" r="3" fill="#ff5a8a"/>' :
-                level>=3 ? '<path d="M44 10 L60 2 L76 10 L72 20 L48 20 Z" fill="#ffcf3a" stroke="#e8920a" stroke-width="2"/>' : '';
-  return `
-  <ellipse cx="60" cy="118" rx="30" ry="6" fill="rgba(120,70,20,.12)"/>
-  <circle cx="60" cy="68" r="42" fill="#ffd33d" stroke="#f0a500" stroke-width="3"/>
-  <circle cx="60" cy="68" r="30" fill="#fff3c4"/>
-  <circle cx="47" cy="64" r="6.5" fill="#3a2b1a"/>
-  <circle cx="73" cy="64" r="6.5" fill="#3a2b1a"/>
-  <circle cx="49" cy="62" r="2" fill="#fff"/>
-  <circle cx="75" cy="62" r="2" fill="#fff"/>
-  <circle cx="40" cy="76" r="5" fill="#ff9aa2" opacity=".8"/>
-  <circle cx="80" cy="76" r="5" fill="#ff9aa2" opacity=".8"/>
-  <path d="M50 78 Q60 88 70 78" stroke="#3a2b1a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-  <circle cx="60" cy="30" r="6" fill="#ff7a3a"/>
-  ${crown}`;
+  const stage = level>=7?4 : level>=5?3 : level>=3?2 : 1;
+  const S    = [0,0.82,0.92,1.0,1.08][stage]; // 成長スケール
+  const finH = [0,14,22,30,36][stage];        // 背びれの高さ
+  const finTop = 46-finH;
+  const crown = stage>=4 ? '<path d="M44 4 L52 15 L60 1 L68 15 L76 4 L74 19 L46 19 Z" fill="#ffd33d" stroke="#e8920a" stroke-width="2"/><circle cx="60" cy="1" r="3" fill="#ff5a8a"/>' : '';
+  const sparkle = stage>=3 ? '<text x="14" y="42" font-size="15">✨</text><text x="92" y="48" font-size="13">✨</text>' : '';
+  const baby = stage===1 ? '<text x="86" y="40" font-size="13">💧</text>' : '';
+  const body = `
+    <ellipse cx="60" cy="123" rx="28" ry="5" fill="rgba(40,55,80,.16)"/>
+    <path d="M60 ${finTop} Q72 ${finTop} 74 46 L46 46 Q48 ${finTop} 60 ${finTop} Z" fill="#33405c"/>
+    <path d="M24 84 Q5 90 13 102 Q24 95 33 95 Z" fill="#2a3450"/>
+    <path d="M96 84 Q115 90 107 102 Q96 95 87 95 Z" fill="#2a3450"/>
+    <path d="M60 26 C86 26 96 50 96 76 C96 104 80 120 60 120 C40 120 24 104 24 76 C24 50 34 26 60 26 Z" fill="#33405c"/>
+    <ellipse cx="60" cy="93" rx="27" ry="27" fill="#fdfdff"/>
+    <path d="M48 118 Q60 112 72 118 L72 119 Q60 113 48 119 Z" fill="#fdfdff"/>
+    <ellipse cx="46" cy="56" rx="9" ry="6.5" fill="#fdfdff" transform="rotate(-16 46 56)"/>
+    <ellipse cx="74" cy="56" rx="9" ry="6.5" fill="#fdfdff" transform="rotate(16 74 56)"/>
+    <circle cx="47" cy="60" r="6" fill="#16203a"/>
+    <circle cx="73" cy="60" r="6" fill="#16203a"/>
+    <circle cx="49.2" cy="58" r="2" fill="#fff"/>
+    <circle cx="75.2" cy="58" r="2" fill="#fff"/>
+    <circle cx="39" cy="80" r="5" fill="#ff9aa2" opacity=".75"/>
+    <circle cx="81" cy="80" r="5" fill="#ff9aa2" opacity=".75"/>
+    <path d="M50 83 Q60 93 70 83" stroke="#16203a" stroke-width="3" fill="none" stroke-linecap="round"/>
+  `;
+  return `<g transform="translate(60 74) scale(${S}) translate(-60 -74)">${crown}${body}${sparkle}${baby}</g>`;
 }
 function paintZen(){['zenHome','zenSmall','zenResult','zenWin'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=zenboy(save.level);});}
 
