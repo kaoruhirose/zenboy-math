@@ -1,4 +1,4 @@
-<!-- BEGIN:kaoru-common-rules v5 -->
+<!-- BEGIN:kaoru-common-rules v6 -->
 # 共通ルール（全プロジェクト共通・廣瀬薫）
 
 > **このブロックは、AGENTS.md を読むすべてのAIコーディングツールで機能します。**
@@ -110,7 +110,8 @@
 1. **プロジェクトは必ず `~/Projects/active/` に置く。** 引退したものは `~/Projects/archive/` へ。
 2. **`~/Desktop`・`~/Documents`・`~/Downloads` にプロジェクトを置かない。**
    macOS の保護機能により、自動起動したプログラムがアクセスできず失敗する
-   （実例：Secretary Bot の常駐が失敗し `~/secretary-bot` へ移設して解決）。
+   （実例：Secretary Bot の常駐が `~/Desktop` で失敗した。
+   現在の稼働先は `~/Projects/active/discord-secretary`）。
 3. **ホームフォルダ直下を作業場所にして AI を起動しない。**
    2026-04-07 に誤って `~/.git` が作られ、7.7GB のゴミが発生した（2026-08-27 に削除済み）。
 4. **月に1回 `~/.git` が存在しないか確認する。** あれば即調査。
