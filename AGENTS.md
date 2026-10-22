@@ -1,4 +1,4 @@
-<!-- BEGIN:kaoru-common-rules v8 -->
+<!-- BEGIN:kaoru-common-rules v9 -->
 # 共通ルール（全プロジェクト共通・廣瀬薫）
 
 > **このブロックは、AGENTS.md を読むすべてのAIコーディングツールで機能します。**
@@ -8,7 +8,8 @@
 > 全プロジェクトに同じ内容が入っています。**正本は OCEAN の深層**（`~/Projects/active/ocean/sea/deep/way/common-rules.md`）。
 > 更新するときは正本を直して版番号を1つ上げ、`~/Projects/sync-common-rules.sh --apply` で全プロジェクトへ配ること
 > （`--apply` を付けずに実行すると、書き換えずに差分だけ確認できる）。
-> 新しいプロジェクトを始めるときは `~/Projects/_template/` をコピーしてください。
+> 新しいプロジェクトを始めるときは、AI に「新しいプロジェクト〇〇を作って」と頼む。AI は雛形 `~/Projects/template/` の4ファイルを、隠しファイルの `.gitignore` も含めて `~/Projects/active/〇〇/` にコピーする
+> （雛形の近道を Finder で複製しても、中身はコピーされない）。
 
 ---
 
